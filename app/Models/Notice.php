@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\NoticeStatus;
 use Database\Factories\NoticeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,9 +25,39 @@ class Notice extends Model
         ];
     }
 
+    public function status(): NoticeStatus
+    {
+        if ($this->published_at === null) {
+            return NoticeStatus::Draft;
+        }
+
+        return $this->published_at->isFuture()
+            ? NoticeStatus::Scheduled
+            : NoticeStatus::Published;
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status() === NoticeStatus::Draft;
+    }
+
     public function isPublished(): bool
     {
-        return $this->published_at !== null && $this->published_at->lte(now());
+        return $this->status() === NoticeStatus::Published;
+    }
+
+    public function isScheduled(): bool
+    {
+        return $this->status() === NoticeStatus::Scheduled;
+    }
+
+    /**
+     * @param  Builder<Notice>  $query
+     * @return Builder<Notice>
+     */
+    public function scopeDraft(Builder $query): Builder
+    {
+        return $query->whereNull('published_at');
     }
 
     /**
@@ -38,5 +69,16 @@ class Notice extends Model
         return $query
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
+    }
+
+    /**
+     * @param  Builder<Notice>  $query
+     * @return Builder<Notice>
+     */
+    public function scopeScheduled(Builder $query): Builder
+    {
+        return $query
+            ->whereNotNull('published_at')
+            ->where('published_at', '>', now());
     }
 }

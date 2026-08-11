@@ -149,6 +149,11 @@ td {
     color: var(--muted);
 }
 
+.badge.scheduled {
+    background: #fbf0dd;
+    color: #8a5a1b;
+}
+
 .flash {
     background: var(--accent-soft);
     color: var(--accent);
@@ -171,6 +176,7 @@ label {
     margin-bottom: 6px;
 }
 
+input[type="datetime-local"],
 input[type="email"],
 input[type="password"],
 input[type="text"],
@@ -193,6 +199,28 @@ textarea {
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
+}
+
+.statuses {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 16px 0;
+    margin: 0 0 16px;
+}
+
+.statuses legend {
+    font-weight: 600;
+    padding: 0 6px;
+}
+
+.statuses .checkbox {
+    font-weight: 400;
+    margin-bottom: 12px;
+}
+
+.field-note {
+    margin: -8px 0 16px;
+    font-size: 13px;
 }
 
 .btn {

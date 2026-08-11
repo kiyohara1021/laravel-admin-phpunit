@@ -14,7 +14,8 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'noticeCount' => Notice::query()->count(),
             'publishedCount' => Notice::query()->published()->count(),
-            'draftCount' => Notice::query()->whereNull('published_at')->count(),
+            'scheduledCount' => Notice::query()->scheduled()->count(),
+            'draftCount' => Notice::query()->draft()->count(),
             'adminCount' => User::query()->where('is_admin', true)->count(),
         ]);
     }

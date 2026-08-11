@@ -15,14 +15,20 @@ class DashboardTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         Notice::factory()->create();
-        Notice::factory()->draft()->create();
+        Notice::factory()->scheduled()->create();
+        Notice::factory()->draft()->count(2)->create();
 
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('ダッシュボード')
-            ->assertSee('2')
-            ->assertSee('1');
+            ->assertSeeInOrder([
+                'お知らせ', '4',
+                '公開中', '1',
+                '予約公開', '1',
+                '下書き', '2',
+                '管理者', '1',
+            ]);
     }
 
     public function test_non_admin_cannot_view_dashboard(): void

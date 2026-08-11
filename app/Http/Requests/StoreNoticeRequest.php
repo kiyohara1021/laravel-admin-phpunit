@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\NoticeStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreNoticeRequest extends FormRequest
 {
@@ -16,23 +18,32 @@ class StoreNoticeRequest extends FormRequest
     }
 
     /**
+     * 予約公開以外では日時欄が空で送られてくるため、null に寄せておく。
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('published_at') === '') {
+            $this->merge(['published_at' => null]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'published' => $this->boolean('published'),
-        ]);
-    }
-
     public function rules(): array
     {
         return [
             'title' => ['required', 'string', 'max:100'],
             'body' => ['required', 'string', 'max:5000'],
-            'published' => ['required', 'boolean'],
+            'status' => ['required', Rule::enum(NoticeStatus::class)],
+            'published_at' => [
+                'nullable',
+                'required_if:status,'.NoticeStatus::Scheduled->value,
+                'date',
+                'after:now',
+            ],
         ];
     }
 
@@ -44,6 +55,8 @@ class StoreNoticeRequest extends FormRequest
         return [
             'title' => 'タイトル',
             'body' => '本文',
+            'status' => '状態',
+            'published_at' => '公開日時',
         ];
     }
 }

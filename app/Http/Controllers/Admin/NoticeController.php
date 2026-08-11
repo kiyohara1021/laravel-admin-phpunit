@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\NoticeStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreNoticeRequest;
 use App\Http\Requests\UpdateNoticeRequest;
 use App\Models\Notice;
+use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class NoticeController extends Controller
@@ -41,7 +44,7 @@ class NoticeController extends Controller
 
     public function update(UpdateNoticeRequest $request, Notice $notice): RedirectResponse
     {
-        $notice->update($this->noticeAttributes($request->validated()));
+        $notice->update($this->noticeAttributes($request->validated(), $notice));
 
         return redirect()
             ->route('admin.notices.index')
@@ -61,12 +64,25 @@ class NoticeController extends Controller
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
-    private function noticeAttributes(array $validated): array
+    private function noticeAttributes(array $validated, ?Notice $notice = null): array
     {
         return [
             'title' => $validated['title'],
             'body' => $validated['body'],
-            'published_at' => ($validated['published'] ?? false) ? now() : null,
+            'published_at' => $this->resolvePublishedAt($validated, $notice),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function resolvePublishedAt(array $validated, ?Notice $notice): ?CarbonInterface
+    {
+        return match (NoticeStatus::from($validated['status'])) {
+            NoticeStatus::Draft => null,
+            NoticeStatus::Scheduled => Carbon::parse($validated['published_at']),
+            // すでに公開済みなら初回の公開日時を保つ（編集のたびに繰り上がらないように）
+            NoticeStatus::Published => $notice?->isPublished() ? $notice->published_at : now(),
+        };
     }
 }

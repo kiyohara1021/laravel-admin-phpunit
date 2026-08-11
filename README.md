@@ -1,12 +1,24 @@
-# Laravel 管理画面 PHPUnit 練習
+# Laravel 管理画面 × PHPUnit
 
-Laravel 13 の管理画面サンプルです。ログイン、ダッシュボード、お知らせの CRUD を PHPUnit で試せます。
+Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature / Unit テストで固めるまでを一通り示すサンプルです。ログイン、権限による出し分け、お知らせの CRUD と予約公開を題材にしています。学習・参照用で、本番運用は想定していません。
 
 ## できること
 
 - 管理者ログイン / ログアウト
-- ダッシュボード（件数の表示）
-- お知らせの作成・編集・削除（公開 / 下書き）
+- ダッシュボード（状態ごとの件数の表示）
+- お知らせの作成・編集・削除
+
+## お知らせの状態
+
+お知らせは `published_at` の値ひとつで、次の 3 つの状態を表します（`App\Enums\NoticeStatus`）。
+
+| 状態 | `published_at` | 説明 |
+| --- | --- | --- |
+| 下書き | `null` | まだ公開しない |
+| 公開 | 現在時刻以前 | 公開中 |
+| 予約公開 | 未来の日時 | その時刻になると自動的に公開になる |
+
+予約公開を選んだときだけ、公開日時（未来）の入力が必須です。すでに公開中のお知らせを「公開」のまま編集しても、最初の公開日時は変わりません。
 
 ## 起動
 
@@ -46,5 +58,5 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 | --- | --- |
 | `tests/Feature/AuthenticationTest.php` | ログイン・ログアウト・未ログイン時のリダイレクト |
 | `tests/Feature/DashboardTest.php` | 管理者のみダッシュボードを見られる |
-| `tests/Feature/NoticeManagementTest.php` | お知らせ CRUD とバリデーション |
-| `tests/Unit/NoticeTest.php` | 公開判定と `published` スコープ |
+| `tests/Feature/NoticeManagementTest.php` | お知らせ CRUD、予約公開、バリデーション |
+| `tests/Unit/NoticeTest.php` | 状態判定と `published` / `scheduled` / `draft` スコープ |

@@ -19,7 +19,7 @@
         <div class="topbar">
             <div>
                 <h1>@yield('title', '管理画面')</h1>
-                <p class="muted">PHPUnit 練習用の管理画面です。</p>
+                <p class="muted">PHPUnit のテストを添えた管理画面サンプルです。</p>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

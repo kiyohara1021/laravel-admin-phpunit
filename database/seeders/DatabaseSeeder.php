@@ -32,6 +32,11 @@ class DatabaseSeeder extends Seeder
             'published_at' => now(),
         ]);
 
+        Notice::factory()->scheduled()->create([
+            'title' => '予約公開のお知らせ',
+            'body' => '公開日時になると自動的に公開扱いになります。',
+        ]);
+
         Notice::factory()->draft()->create([
             'title' => '下書きのお知らせ',
             'body' => 'まだ公開していないお知らせです。',

@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel-admin-phpunit/app",
     "type": "project",
-    "description": "Laravel admin panel for practicing PHPUnit.",
+    "description": "Laravel admin panel sample with PHPUnit tests.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

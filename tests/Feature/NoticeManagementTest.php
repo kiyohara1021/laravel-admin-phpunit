@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\NoticeStatus;
 use App\Models\Notice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,24 @@ class NoticeManagementTest extends TestCase
             ->assertSee($notice->title);
     }
 
+    public function test_notice_index_shows_each_status(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Notice::factory()->create(['title' => '公開済みのお知らせ']);
+        Notice::factory()->scheduled()->create(['title' => '予約公開のお知らせ']);
+        Notice::factory()->draft()->create(['title' => '下書きのお知らせ']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.notices.index'))
+            ->assertOk()
+            ->assertSee('公開済みのお知らせ')
+            ->assertSee('予約公開のお知らせ')
+            ->assertSee('下書きのお知らせ')
+            ->assertSee('badge published', escape: false)
+            ->assertSee('badge scheduled', escape: false)
+            ->assertSee('badge draft', escape: false);
+    }
+
     public function test_admin_can_create_a_published_notice(): void
     {
         $admin = User::factory()->admin()->create();
@@ -31,7 +50,7 @@ class NoticeManagementTest extends TestCase
             ->post(route('admin.notices.store'), [
                 'title' => '公開お知らせ',
                 'body' => '本文です。',
-                'published' => '1',
+                'status' => NoticeStatus::Published->value,
             ])
             ->assertRedirect(route('admin.notices.index'))
             ->assertSessionHas('status', 'お知らせを作成しました。');
@@ -41,7 +60,9 @@ class NoticeManagementTest extends TestCase
             'body' => '本文です。',
         ]);
 
-        $this->assertNotNull(Notice::query()->where('title', '公開お知らせ')->value('published_at'));
+        $notice = Notice::query()->where('title', '公開お知らせ')->sole();
+
+        $this->assertSame(NoticeStatus::Published, $notice->status());
     }
 
     public function test_admin_can_create_a_draft_notice(): void
@@ -52,10 +73,70 @@ class NoticeManagementTest extends TestCase
             ->post(route('admin.notices.store'), [
                 'title' => '下書きお知らせ',
                 'body' => 'まだ公開しません。',
+                'status' => NoticeStatus::Draft->value,
             ])
             ->assertRedirect(route('admin.notices.index'));
 
         $this->assertNull(Notice::query()->where('title', '下書きお知らせ')->value('published_at'));
+    }
+
+    public function test_admin_can_schedule_a_notice(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $publishAt = now()->addDay()->startOfMinute();
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '予約公開お知らせ',
+                'body' => '明日公開します。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => $publishAt->format('Y-m-d\TH:i'),
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '予約公開お知らせ')->sole();
+
+        $this->assertSame(NoticeStatus::Scheduled, $notice->status());
+        $this->assertFalse($notice->isPublished());
+        $this->assertSame(
+            $publishAt->format('Y-m-d H:i'),
+            $notice->published_at->format('Y-m-d H:i')
+        );
+    }
+
+    public function test_scheduling_requires_a_published_at(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.notices.create'))
+            ->post(route('admin.notices.store'), [
+                'title' => '日時なしの予約公開',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+            ])
+            ->assertRedirect(route('admin.notices.create'))
+            ->assertSessionHasErrors('published_at');
+
+        $this->assertDatabaseMissing('notices', ['title' => '日時なしの予約公開']);
+    }
+
+    public function test_scheduling_rejects_a_past_published_at(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.notices.create'))
+            ->post(route('admin.notices.store'), [
+                'title' => '過去日時の予約公開',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => now()->subDay()->format('Y-m-d\TH:i'),
+            ])
+            ->assertRedirect(route('admin.notices.create'))
+            ->assertSessionHasErrors('published_at');
+
+        $this->assertDatabaseMissing('notices', ['title' => '過去日時の予約公開']);
     }
 
     public function test_notice_creation_requires_title_and_body(): void
@@ -72,6 +153,21 @@ class NoticeManagementTest extends TestCase
             ->assertSessionHasErrors(['title', 'body']);
     }
 
+    public function test_notice_creation_rejects_an_unknown_status(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.notices.create'))
+            ->post(route('admin.notices.store'), [
+                'title' => '不明な状態',
+                'body' => '本文です。',
+                'status' => 'archived',
+            ])
+            ->assertRedirect(route('admin.notices.create'))
+            ->assertSessionHasErrors('status');
+    }
+
     public function test_admin_can_update_a_notice(): void
     {
         $admin = User::factory()->admin()->create();
@@ -81,7 +177,7 @@ class NoticeManagementTest extends TestCase
             ->put(route('admin.notices.update', $notice), [
                 'title' => '新タイトル',
                 'body' => '更新後の本文',
-                'published' => '1',
+                'status' => NoticeStatus::Published->value,
             ])
             ->assertRedirect(route('admin.notices.index'));
 
@@ -92,6 +188,43 @@ class NoticeManagementTest extends TestCase
         ]);
 
         $this->assertTrue($notice->fresh()->isPublished());
+    }
+
+    public function test_updating_a_published_notice_keeps_its_original_published_at(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $publishedAt = now()->subDays(3)->startOfSecond();
+        $notice = Notice::factory()->create(['published_at' => $publishedAt]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.notices.update', $notice), [
+                'title' => '誤字を直しました',
+                'body' => '本文は変わりません。',
+                'status' => NoticeStatus::Published->value,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $this->assertSame(
+            $publishedAt->format('Y-m-d H:i:s'),
+            $notice->fresh()->published_at->format('Y-m-d H:i:s')
+        );
+    }
+
+    public function test_admin_can_move_a_published_notice_back_to_draft(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $notice = Notice::factory()->create();
+
+        $this->actingAs($admin)
+            ->put(route('admin.notices.update', $notice), [
+                'title' => '取り下げます',
+                'body' => '一度下書きに戻します。',
+                'status' => NoticeStatus::Draft->value,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $this->assertTrue($notice->fresh()->isDraft());
+        $this->assertNull($notice->fresh()->published_at);
     }
 
     public function test_admin_can_delete_a_notice(): void
@@ -121,6 +254,7 @@ class NoticeManagementTest extends TestCase
             ->post(route('admin.notices.store'), [
                 'title' => '不正な作成',
                 'body' => '一般ユーザーは作成できません。',
+                'status' => NoticeStatus::Draft->value,
             ])
             ->assertForbidden();
 
