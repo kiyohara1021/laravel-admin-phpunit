@@ -24,6 +24,8 @@ Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature 
 
 ## 起動
 
+PHP 8.4 以上が必要です（`composer.lock` が固定している Symfony 8.1 系の要求）。
+
 ```bash
 composer install
 cp .env.example .env
@@ -76,5 +78,5 @@ vendor/bin/pint --test   # 検査だけする
 
 | ジョブ | 内容 |
 | --- | --- |
-| PHPUnit | PHP 8.3 / 8.4 の両方で `php artisan test` |
+| PHPUnit | PHP 8.4 / 8.5 の両方で `php artisan test` |
 | Pint | `vendor/bin/pint --test` でコードスタイルを検査 |
