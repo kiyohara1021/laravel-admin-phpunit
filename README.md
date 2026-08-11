@@ -1,5 +1,7 @@
 # Laravel 管理画面 × PHPUnit
 
+[![CI](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml/badge.svg)](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml)
+
 Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature / Unit テストで固めるまでを一通り示すサンプルです。ログイン、権限による出し分け、お知らせの CRUD と予約公開を題材にしています。学習・参照用で、本番運用は想定していません。
 
 ## できること
@@ -60,3 +62,19 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 | `tests/Feature/DashboardTest.php` | 管理者のみダッシュボードを見られる |
 | `tests/Feature/NoticeManagementTest.php` | お知らせ CRUD、予約公開、バリデーション |
 | `tests/Unit/NoticeTest.php` | 状態判定と `published` / `scheduled` / `draft` スコープ |
+
+## コードスタイル
+
+```bash
+vendor/bin/pint          # 修正する
+vendor/bin/pint --test   # 検査だけする
+```
+
+## CI
+
+`main` への push と Pull Request で [GitHub Actions](.github/workflows/ci.yml) が動きます。
+
+| ジョブ | 内容 |
+| --- | --- |
+| PHPUnit | PHP 8.3 / 8.4 の両方で `php artisan test` |
+| Pint | `vendor/bin/pint --test` でコードスタイルを検査 |
