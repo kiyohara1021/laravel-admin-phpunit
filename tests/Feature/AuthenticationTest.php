@@ -47,6 +47,37 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_requires_an_email_and_a_password(): void
+    {
+        $this->from(route('login'))
+            ->post(route('login.store'), [
+                'email' => '',
+                'password' => '',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors(['email', 'password']);
+
+        $errors = session('errors');
+
+        $this->assertStringContainsString('メールアドレス', $errors->first('email'), 'メールアドレスの属性名が日本語になること');
+        $this->assertStringContainsString('パスワード', $errors->first('password'), 'パスワードの属性名が日本語になること');
+        $this->assertGuest();
+    }
+
+    public function test_login_rejects_a_malformed_email_address(): void
+    {
+        $this->from(route('login'))
+            ->post(route('login.store'), [
+                'email' => 'not-an-email',
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertStringContainsString('メールアドレス', session('errors')->first('email'), 'メールアドレスの属性名が日本語になること');
+        $this->assertGuest();
+    }
+
     public function test_guests_are_redirected_to_login(): void
     {
         $this->get(route('admin.dashboard'))

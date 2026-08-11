@@ -236,9 +236,119 @@ class NoticeManagementTest extends TestCase
             ->delete(route('admin.notices.destroy', $notice))
             ->assertRedirect(route('admin.notices.index'));
 
-        $this->assertDatabaseMissing('notices', [
-            'id' => $notice->id,
-        ]);
+        // 論理削除なので行は残るが、通常のクエリからは消える
+        $this->assertSoftDeleted($notice);
+        $this->assertNull(Notice::query()->find($notice->id));
+    }
+
+    public function test_creating_a_notice_records_the_logged_in_admin_as_its_author(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '作成者つきお知らせ',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Published->value,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '作成者つきお知らせ')->sole();
+
+        $this->assertSame($admin->id, $notice->user_id, 'ログイン中の管理者が作成者になること');
+    }
+
+    public function test_creating_a_notice_ignores_a_user_id_sent_by_the_client(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $other = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '作成者を詐称したお知らせ',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Published->value,
+                'user_id' => $other->id,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '作成者を詐称したお知らせ')->sole();
+
+        $this->assertSame($admin->id, $notice->user_id, '作成者は入力ではなくログイン中の管理者になること');
+    }
+
+    public function test_updating_a_notice_ignores_a_user_id_sent_by_the_client(): void
+    {
+        $author = User::factory()->admin()->create();
+        $editor = User::factory()->admin()->create();
+        $notice = Notice::factory()->for($author)->create();
+
+        $this->actingAs($editor)
+            ->put(route('admin.notices.update', $notice), [
+                'title' => '作成者を書き換えようとした編集',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Published->value,
+                'user_id' => $editor->id,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $this->assertSame($author->id, $notice->fresh()->user_id, '入力で作成者を差し替えられないこと');
+    }
+
+    public function test_updating_a_notice_keeps_its_original_author(): void
+    {
+        $author = User::factory()->admin()->create();
+        $editor = User::factory()->admin()->create();
+        $notice = Notice::factory()->for($author)->create();
+
+        $this->actingAs($editor)
+            ->put(route('admin.notices.update', $notice), [
+                'title' => '別の管理者が編集しました',
+                'body' => '本文を直しました。',
+                'status' => NoticeStatus::Published->value,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $this->assertSame($author->id, $notice->fresh()->user_id, '更新しても作成者は変わらないこと');
+    }
+
+    public function test_notice_index_shows_the_author_name(): void
+    {
+        // 見ている人の名前はレイアウトのログアウトボタンにも出るので、作成者とは別のユーザーにする
+        $author = User::factory()->admin()->create(['name' => '書いた人']);
+        $viewer = User::factory()->admin()->create(['name' => '見ている人']);
+        Notice::factory()->for($author)->create(['title' => '作成者を表示するお知らせ']);
+
+        $this->actingAs($viewer)
+            ->get(route('admin.notices.index'))
+            ->assertOk()
+            ->assertSee('作成者')
+            ->assertSee('<td>書いた人</td>', escape: false);
+    }
+
+    public function test_notice_index_shows_a_dash_when_the_author_is_missing(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Notice::factory()->withoutAuthor()->create(['title' => '作成者のないお知らせ']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.notices.index'))
+            ->assertOk()
+            ->assertSee('作成者のないお知らせ')
+            ->assertSee('<td>—</td>', escape: false);
+    }
+
+    public function test_notice_index_excludes_soft_deleted_notices(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Notice::factory()->create(['title' => '残しているお知らせ']);
+        Notice::factory()->create(['title' => 'ゴミ箱に入れたお知らせ'])->delete();
+
+        $this->actingAs($admin)
+            ->get(route('admin.notices.index'))
+            ->assertOk()
+            ->assertSee('残しているお知らせ')
+            ->assertDontSee('ゴミ箱に入れたお知らせ');
     }
 
     public function test_non_admin_cannot_manage_notices(): void

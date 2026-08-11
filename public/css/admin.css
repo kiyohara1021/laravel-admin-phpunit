@@ -39,7 +39,8 @@ a {
 }
 
 .auth-card,
-.panel {
+.panel,
+.notice-card {
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -121,6 +122,12 @@ a {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+}
+
+.actions-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 table {
@@ -271,4 +278,62 @@ textarea {
         display: flex;
         gap: 8px;
     }
+}
+
+/* 公開側 */
+.public-header {
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.public-header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+}
+
+.public-brand {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.public-main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.public-title {
+    font-size: 24px;
+    margin: 0 0 20px;
+}
+
+.notice-card {
+    padding: 20px 24px;
+    margin-bottom: 16px;
+}
+
+.notice-card-title {
+    font-size: 18px;
+    margin: 4px 0 0;
+}
+
+.notice-meta {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+.notice-body {
+    line-height: 1.9;
+    margin-top: 16px;
+}
+
+.public-back,
+.public-pagination {
+    margin-top: 24px;
 }

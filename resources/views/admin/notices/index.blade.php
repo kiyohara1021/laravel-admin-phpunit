@@ -5,7 +5,10 @@
 @section('content')
     <div class="actions">
         <p class="muted">公開・予約公開・下書きのお知らせを管理します。</p>
-        <a class="btn" href="{{ route('admin.notices.create') }}">新規作成</a>
+        <div class="actions-right">
+            <a class="btn secondary" href="{{ route('admin.notices.trashed') }}">ゴミ箱（{{ $trashedCount }}）</a>
+            <a class="btn" href="{{ route('admin.notices.create') }}">新規作成</a>
+        </div>
     </div>
 
     <div class="panel" style="padding: 8px 16px 16px;">
@@ -14,6 +17,7 @@
             <tr>
                 <th>タイトル</th>
                 <th>状態</th>
+                <th>作成者</th>
                 <th>公開日時</th>
                 <th>更新日</th>
                 <th></th>
@@ -26,6 +30,7 @@
                     <td>
                         <span class="badge {{ $notice->status()->value }}">{{ $notice->status()->label() }}</span>
                     </td>
+                    <td>{{ $notice->user?->name ?? '—' }}</td>
                     <td>{{ $notice->published_at?->format('Y-m-d H:i') ?? '—' }}</td>
                     <td>{{ $notice->updated_at->format('Y-m-d H:i') }}</td>
                     <td class="row-actions">
@@ -39,7 +44,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="muted">お知らせはまだありません。</td>
+                    <td colspan="6" class="muted">お知らせはまだありません。</td>
                 </tr>
             @endforelse
             </tbody>

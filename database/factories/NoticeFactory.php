@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Notice;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +22,18 @@ class NoticeFactory extends Factory
             'title' => fake()->sentence(4),
             'body' => fake()->paragraphs(2, true),
             'published_at' => now(),
+            'user_id' => User::factory(),
         ];
+    }
+
+    /**
+     * Indicate that the notice has no author.
+     */
+    public function withoutAuthor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => null,
+        ]);
     }
 
     /**

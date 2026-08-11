@@ -17,7 +17,8 @@ class NoticeController extends Controller
     public function index(): View
     {
         return view('admin.notices.index', [
-            'notices' => Notice::query()->latest()->paginate(10),
+            'notices' => Notice::query()->with('user')->latest()->orderByDesc('id')->paginate(10),
+            'trashedCount' => Notice::query()->onlyTrashed()->count(),
         ]);
     }
 
@@ -28,7 +29,10 @@ class NoticeController extends Controller
 
     public function store(StoreNoticeRequest $request): RedirectResponse
     {
-        Notice::query()->create($this->noticeAttributes($request->validated()));
+        // 作成者は入力ではなくログイン中の管理者から取る
+        $notice = new Notice($this->noticeAttributes($request->validated()));
+        $notice->user()->associate($request->user());
+        $notice->save();
 
         return redirect()
             ->route('admin.notices.index')

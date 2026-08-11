@@ -8,12 +8,24 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['title', 'body', 'published_at'])]
 class Notice extends Model
 {
     /** @use HasFactory<NoticeFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * 作成者。ユーザーが削除されると null になる
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * @return array<string, string>

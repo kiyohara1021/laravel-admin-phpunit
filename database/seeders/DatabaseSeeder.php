@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->admin()->create([
+        $admin = User::factory()->admin()->create([
             'name' => '管理者',
             'email' => 'admin@example.com',
         ]);
@@ -26,20 +26,26 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@example.com',
         ]);
 
-        Notice::factory()->create([
+        Notice::factory()->for($admin)->create([
             'title' => '管理画面の使い方',
-            'body' => 'ログイン後、お知らせの作成・編集・削除ができます。PHPUnit の練習用サンプルです。',
+            'body' => 'ログイン後、お知らせの作成・編集・削除ができます。PHPUnit のテストを添えた管理画面サンプルです。',
             'published_at' => now(),
         ]);
 
-        Notice::factory()->scheduled()->create([
+        Notice::factory()->for($admin)->scheduled()->create([
             'title' => '予約公開のお知らせ',
             'body' => '公開日時になると自動的に公開扱いになります。',
         ]);
 
-        Notice::factory()->draft()->create([
+        Notice::factory()->for($admin)->draft()->create([
             'title' => '下書きのお知らせ',
             'body' => 'まだ公開していないお知らせです。',
         ]);
+
+        // ゴミ箱の確認用
+        Notice::factory()->for($admin)->create([
+            'title' => '削除したお知らせ',
+            'body' => 'ゴミ箱から復元するか、完全に削除できます。',
+        ])->delete();
     }
 }
