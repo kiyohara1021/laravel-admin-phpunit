@@ -40,7 +40,8 @@ a {
 
 .auth-card,
 .panel,
-.notice-card {
+.notice-card,
+.filters {
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -186,7 +187,9 @@ label {
 input[type="datetime-local"],
 input[type="email"],
 input[type="password"],
+input[type="search"],
 input[type="text"],
+select,
 textarea {
     width: 100%;
     padding: 10px 12px;
@@ -263,6 +266,38 @@ textarea {
     display: inline;
 }
 
+/* 一覧の絞り込み（面のスタイルは .panel などと共通のルールに任せる） */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+}
+
+.filters input,
+.filters select {
+    margin-bottom: 0;
+}
+
+.filter-buttons {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.filter-summary {
+    margin: 0 0 12px;
+}
+
 @media (max-width: 800px) {
     .layout {
         grid-template-columns: 1fr;
@@ -310,6 +345,26 @@ textarea {
 .public-title {
     font-size: 24px;
     margin: 0 0 20px;
+}
+
+.public-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.public-search label {
+    margin-bottom: 0;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.public-search input[type="search"] {
+    width: auto;
+    flex: 1 1 240px;
+    margin-bottom: 0;
 }
 
 .notice-card {

@@ -6,6 +6,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * 管理画面という区画に入れるかどうかだけを見る（ダッシュボードのようにお知らせと無関係な画面も含む）。
+ * 個々のお知らせに何をしてよいかは App\Policies\NoticePolicy が決める。
+ */
 class EnsureUserIsAdmin
 {
     /**
@@ -15,7 +19,8 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->is_admin) {
+        // 管理者の定義は User::isAdmin() に集約している
+        if (! $request->user()?->isAdmin()) {
             abort(403);
         }
 

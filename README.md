@@ -11,6 +11,7 @@ Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature 
 - お知らせの作成・編集・削除（削除は論理削除）
 - 作成者（作成したときのログイン中の管理者）の記録と一覧表示
 - ゴミ箱（削除済み一覧・復元・完全削除）
+- 一覧の絞り込み（キーワード検索と状態フィルタ）
 - 公開側のお知らせ一覧・詳細（ログイン不要）
 
 ## お知らせの状態
@@ -30,6 +31,72 @@ Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature 
 削除は `SoftDeletes` による論理削除です。削除したお知らせは `deleted_at` が入るだけで行は残り、ゴミ箱（お知らせ一覧の「ゴミ箱」リンク）から復元・完全削除ができます。グローバルスコープが効くため、通常の一覧・ダッシュボードの件数・`published` / `scheduled` / `draft` の各スコープに削除済みは混ざりません。
 
 お知らせには作成者（`user_id`）を持たせています。作成時にログイン中の管理者を記録し、あとから編集しても作成者は変わりません。作成者のユーザーを削除した場合は `user_id` が `null` に戻り、一覧では「—」と表示されます。
+
+## 一覧の絞り込み
+
+一覧の 3 画面にキーワード検索と状態フィルタを付けています。
+
+| 画面 | URL | `q`（キーワード） | `status`（状態） |
+| --- | --- | --- | --- |
+| 管理画面のお知らせ一覧 | `/admin/notices` | あり | あり |
+| ゴミ箱 | `/admin/notices/trashed` | あり | なし（「削除済み」の一つしか状態がないため） |
+| 公開側の一覧 | `/notices` | あり | なし（公開中だけが対象なので） |
+
+- `q` はタイトルと本文の部分一致です。前後の空白は無視し、空文字や空白だけのときは絞り込みません。
+- `status` には `NoticeStatus` の値（`draft` / `published` / `scheduled`）を使います。未指定なら全件です。
+- 存在しない `status`（例: `?status=archived`）は**エラーにせず無視**して全件を出します。一覧の絞り込みは URL に載った表示状態であって命令ではないので、古いブックマークやタイポで管理画面がエラーになる方が害が大きい、という判断です。無視されたことは状態のセレクトが「すべて」に戻ることで見て分かります。
+- 絞り込み中は「該当 N 件」を出し、0 件のときは「検索条件に一致するお知らせはありません。」を出します。絞り込みをしていないときの文言は従来どおりです。
+- ページャのリンクは `withQueryString()` で絞り込み条件を保つので、2 ページ目に行っても条件が消えません。
+
+クエリの組み立ては 3 つのコントローラにコピーせず、`Notice` のスコープに寄せています。
+
+| スコープ | 役割 |
+| --- | --- |
+| `Notice::search(?string $keyword)` | タイトル・本文の部分一致。空なら素通り |
+| `Notice::ofStatus(?NoticeStatus $status)` | `draft()` / `published()` / `scheduled()` に委譲。`null` なら素通り |
+
+`search()` は OR を必ず入れ子の `where` で包みます。包まないと `published()` などの前の条件の外に OR が漏れ、公開側の検索に下書きが混ざりかねないためです。生成される SQL はこうなります。
+
+```sql
+select * from "notices"
+where "published_at" is not null and "published_at" <= ?
+  and (title like ? escape '!' or body like ? escape '!')
+  and "notices"."deleted_at" is null
+order by "published_at" desc, "id" desc
+```
+
+検索語の `%` と `_` は自前でエスケープし、`ESCAPE` 句を明示しています。SQLite は `ESCAPE` 句がないと既定のエスケープ文字を持たないため、句を省くとエスケープしたつもりの記号がリテラル扱いされて何にも当たらなくなります。`whereLike()` を使わないのも同じ理由で、`ESCAPE` 句を付けてくれないからです。これがないと「100%」で検索したときに「100」を含む行が全部返ってしまいます。
+
+エスケープ記号にはバックスラッシュではなく `!` を使っています。SQL 中に `escape '\'` という並びができると、`toRawSql()` / `dumpRawSql()` の文字列リテラル判定が閉じ引用符を読み飛ばし、それ以降のバインディングが `?` のまま残るためです（実行される SQL は `toSql()` とバインディングなので結果は正しく、壊れるのはデバッグ出力だけですが、調査のたびに誤読します）。記号自身も `!!` に二重化するので、`!` を含む語も普通に検索できます。
+
+クエリ文字列の読み取りは値オブジェクト `App\Support\NoticeFilter` にまとめています。GET の絞り込みは「弾くべき入力」ではなく表示状態で、不正値は設計上すべて無視するため、検証を担う FormRequest ではなく値オブジェクトにしました（POST / PUT の本文は従来どおり FormRequest です）。
+
+## 認可
+
+認可は二段構えで、置き場所を役割で分けています。
+
+| 層 | 担当 | 単位 | 何を見るか |
+| --- | --- | --- | --- |
+| `App\Http\Middleware\EnsureUserIsAdmin`（`admin` エイリアス） | 管理画面という区画に入れるか | ルートグループ | 管理者でなければ 403 |
+| `App\Policies\NoticePolicy` | そのお知らせに何をしてよいか | 資源（`Notice`） | 同じく管理者かどうか。作成者かどうかは見ない |
+
+ミドルウェアはリクエストの入口で、ダッシュボードのようにお知らせと無関係な画面も含めて `/admin/...` をまとめて守ります。Policy は `Notice` 1 件に対する操作の可否を決め、単体でテストできます。
+
+役割は分けていますが、「管理者とは何か」の定義は `User::isAdmin()` の 1 か所だけです。ミドルウェアと Policy の両方がこれを呼ぶので、管理者の条件を変えるときに片方だけ直して食い違う、ということが起きません。
+
+Policy が持つ能力は `viewAny` / `create` / `update` / `delete` / `restore` / `forceDelete` の 6 つです。`Notice` モデルに `#[UsePolicy(NoticePolicy::class)]` を付けて紐付け（`Gate::getPolicyFor()` が属性から解決します）、コントローラの各アクションの先頭で `Gate::authorize()` を呼びます。
+
+```php
+public function destroy(Notice $notice): RedirectResponse
+{
+    Gate::authorize('delete', $notice);
+    // ...
+}
+```
+
+FormRequest（`StoreNoticeRequest` / `UpdateNoticeRequest`）の `authorize()` は `true` を返すだけで、検証だけを担当します。管理者かどうかの判定を FormRequest にも書くと同じ規則が二重になるためです。非管理者はミドルウェアがバリデーションより前に 403 を返すので、この一本化で穴は空きません。
+
+管理者は自分が作っていないお知らせも編集・削除できます。逆に、一般ユーザーは自分が作ったお知らせでも操作できません（403）。公開側の画面には認可を足していません（ログイン不要）。
 
 ## 公開側の画面
 
@@ -90,6 +157,8 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 
 テストは SQLite のインメモリ DB（`phpunit.xml`）を使い、`RefreshDatabase` でマイグレーションし直します。
 
+パスワードのハッシュは `phpunit.xml` の `BCRYPT_ROUNDS=4` で軽くしています。この値を読ませるために `config/hashing.php` を置いています。このファイルを消すと設定が既定の 12 ラウンドに戻り、ログインを繰り返すテスト（レート制限まわり）が極端に遅くなります。
+
 | ファイル | 内容 |
 | --- | --- |
 | `tests/Feature/AuthenticationTest.php` | ログイン・ログアウト・未ログイン時のリダイレクト |
@@ -97,9 +166,15 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 | `tests/Feature/DashboardTest.php` | 管理者のみダッシュボードを見られる |
 | `tests/Feature/NoticeManagementTest.php` | お知らせ CRUD、予約公開、バリデーション、作成者の記録 |
 | `tests/Feature/NoticeTrashTest.php` | ゴミ箱の一覧・復元・完全削除と権限 |
+| `tests/Feature/NoticeAuthorizationTest.php` | 各アクションが `NoticePolicy` を通ること、公開側は通らないこと |
+| `tests/Feature/NoticeSearchTest.php` | 3 画面の絞り込み（キーワード・状態・件数・ページャの条件保持・検索ボックスのエスケープ・公開側に漏れないこと） |
 | `tests/Feature/PublicNoticeTest.php` | 公開側の一覧・詳細、公開中以外が 404 になること、本文のエスケープ |
 | `tests/Unit/NoticeTest.php` | 状態判定、`published` / `scheduled` / `draft` スコープ、論理削除と作成者 |
+| `tests/Unit/NoticePolicyTest.php` | `NoticePolicy` の 6 能力（管理者・一般ユーザー・未ログイン・作成者の扱い） |
+| `tests/Unit/NoticeScopeTest.php` | `search` / `ofStatus` スコープ（部分一致、`%` `_` `\` `!` のエスケープ、スコープ外に漏れないこと） |
+| `tests/Unit/NoticeFilterTest.php` | `NoticeFilter` のクエリ文字列の読み取り（trim、空扱い、不正な状態の無視） |
 | `tests/Unit/LoginRequestTest.php` | レート制限のキー（小文字化・トランスリテレーション・IP ごと） |
+| `tests/Unit/UserTest.php` | `User::isAdmin()`（管理者の定義が 1 か所であること） |
 
 ## コードスタイル
 
@@ -116,3 +191,4 @@ vendor/bin/pint --test   # 検査だけする
 | --- | --- |
 | PHPUnit | PHP 8.4 / 8.5 の両方で `php artisan test` |
 | Pint | `vendor/bin/pint --test` でコードスタイルを検査 |
+

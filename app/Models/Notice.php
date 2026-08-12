@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\NoticeStatus;
+use App\Policies\NoticePolicy;
 use Database\Factories\NoticeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['title', 'body', 'published_at'])]
+#[UsePolicy(NoticePolicy::class)]
 class Notice extends Model
 {
     /** @use HasFactory<NoticeFactory> */
@@ -92,5 +95,57 @@ class Notice extends Model
         return $query
             ->whereNotNull('published_at')
             ->where('published_at', '>', now());
+    }
+
+    /**
+     * タイトルと本文の部分一致で絞り込む。前後の空白は無視し、空なら絞り込まない
+     *
+     * @param  Builder<Notice>  $query
+     * @return Builder<Notice>
+     */
+    public function scopeSearch(Builder $query, ?string $keyword): Builder
+    {
+        $keyword = trim((string) $keyword);
+
+        if ($keyword === '') {
+            return $query;
+        }
+
+        $pattern = '%'.self::escapeLike($keyword).'%';
+
+        // OR を入れ子の where で包む。published() など前の条件の外に漏れないようにするため
+        return $query->where(function (Builder $query) use ($pattern): void {
+            $query
+                ->whereRaw("title like ? escape '!'", [$pattern])
+                ->orWhereRaw("body like ? escape '!'", [$pattern]);
+        });
+    }
+
+    /**
+     * 状態で絞り込む。null なら絞り込まない（名前は status() と紛らわしくないよう ofStatus）
+     *
+     * @param  Builder<Notice>  $query
+     * @return Builder<Notice>
+     */
+    public function scopeOfStatus(Builder $query, ?NoticeStatus $status): Builder
+    {
+        return match ($status) {
+            NoticeStatus::Draft => $query->draft(),
+            NoticeStatus::Published => $query->published(),
+            NoticeStatus::Scheduled => $query->scheduled(),
+            null => $query,
+        };
+    }
+
+    /**
+     * LIKE のワイルドカードをリテラルに戻す。
+     * エスケープ記号自身を先に置換しないと、あとから足すエスケープ記号まで二重に潰れる。
+     *
+     * 記号にバックスラッシュを使わないのは、SQL 中に `escape '\'` という並びができると
+     * toRawSql() / dumpRawSql() の文字列リテラル判定が壊れ、以降の値が ? のまま残るため
+     */
+    private static function escapeLike(string $keyword): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $keyword);
     }
 }

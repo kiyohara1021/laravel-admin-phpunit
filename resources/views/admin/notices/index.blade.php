@@ -11,6 +11,32 @@
         </div>
     </div>
 
+    <form class="filters" method="GET" action="{{ route('admin.notices.index') }}">
+        <div class="filter-field">
+            <label for="q">キーワード</label>
+            <input id="q" type="search" name="q" value="{{ $filter->keyword }}" placeholder="タイトル・本文">
+        </div>
+        <div class="filter-field">
+            <label for="status">状態</label>
+            <select id="status" name="status">
+                <option value="">すべて</option>
+                @foreach (\App\Enums\NoticeStatus::cases() as $case)
+                    <option value="{{ $case->value }}" @selected($filter->status === $case)>{{ $case->label() }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="filter-field filter-buttons">
+            <button class="btn" type="submit">絞り込む</button>
+            @if ($filter->isActive())
+                <a class="btn secondary" href="{{ route('admin.notices.index') }}">条件をクリア</a>
+            @endif
+        </div>
+    </form>
+
+    @if ($filter->isActive())
+        <p class="muted filter-summary">該当 {{ $notices->total() }} 件</p>
+    @endif
+
     <div class="panel" style="padding: 8px 16px 16px;">
         <table>
             <thead>
@@ -44,7 +70,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="muted">お知らせはまだありません。</td>
+                    <td colspan="6" class="muted">{{ $filter->isActive() ? '検索条件に一致するお知らせはありません。' : 'お知らせはまだありません。' }}</td>
                 </tr>
             @endforelse
             </tbody>

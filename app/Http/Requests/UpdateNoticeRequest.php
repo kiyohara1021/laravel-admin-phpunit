@@ -10,11 +10,12 @@ use Illuminate\Validation\Rule;
 class UpdateNoticeRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * 認可は App\Policies\NoticePolicy に集約している。
+     * 区画の入場は admin ミドルウェア、操作の可否はコントローラの Gate::authorize が見る。
      */
     public function authorize(): bool
     {
-        return $this->user()?->is_admin === true;
+        return true;
     }
 
     /**

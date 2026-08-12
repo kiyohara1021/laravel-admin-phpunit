@@ -4,27 +4,41 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
+use App\Support\NoticeFilter;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class TrashedNoticeController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        Gate::authorize('viewAny', Notice::class);
+
+        // 状態は「削除済み」の一つしかないので、絞り込みはキーワードだけ（ofStatus は呼ばない）
+        $filter = NoticeFilter::fromRequest($request);
+
         return view('admin.notices.trashed', [
             'notices' => Notice::query()
                 ->onlyTrashed()
                 ->with('user')
+                ->search($filter->keyword)
                 ->latest('deleted_at')
                 // 削除日時が同じときの並びを一意に決める
                 ->orderByDesc('id')
-                ->paginate(10),
+                ->paginate(10)
+                ->withQueryString(),
+            'filter' => $filter,
         ]);
     }
 
     public function restore(string $notice): RedirectResponse
     {
-        $this->trashedNotice($notice)->restore();
+        $trashed = $this->trashedNotice($notice);
+        Gate::authorize('restore', $trashed);
+
+        $trashed->restore();
 
         return redirect()
             ->route('admin.notices.trashed')
@@ -33,7 +47,10 @@ class TrashedNoticeController extends Controller
 
     public function forceDelete(string $notice): RedirectResponse
     {
-        $this->trashedNotice($notice)->forceDelete();
+        $trashed = $this->trashedNotice($notice);
+        Gate::authorize('forceDelete', $trashed);
+
+        $trashed->forceDelete();
 
         return redirect()
             ->route('admin.notices.trashed')

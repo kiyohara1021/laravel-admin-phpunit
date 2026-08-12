@@ -17,6 +17,15 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * 管理者かどうかの判定はここ 1 か所。
+     * 区画を守る EnsureUserIsAdmin と、資源を守る NoticePolicy の両方がこれを呼ぶ。
+     */
+    public function isAdmin(): bool
+    {
+        return $this->is_admin === true;
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

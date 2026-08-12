@@ -361,6 +361,10 @@ class NoticeManagementTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($user)
+            ->get(route('admin.notices.create'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
             ->post(route('admin.notices.store'), [
                 'title' => '不正な作成',
                 'body' => '一般ユーザーは作成できません。',
@@ -369,7 +373,21 @@ class NoticeManagementTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($user)
+            ->put(route('admin.notices.update', $notice), [
+                'title' => '不正な更新',
+                'body' => '一般ユーザーは更新できません。',
+                'status' => NoticeStatus::Draft->value,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
             ->delete(route('admin.notices.destroy', $notice))
             ->assertForbidden();
+
+        $this->assertSame(
+            $notice->title,
+            $notice->fresh()->title,
+            '403 で止まるので中身は書き換わらない'
+        );
     }
 }
