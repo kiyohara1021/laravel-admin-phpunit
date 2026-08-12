@@ -1,6 +1,7 @@
 # Laravel 管理画面 × PHPUnit
 
 [![CI](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml/badge.svg)](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature / Unit テストで固めるまでを一通り示すサンプルです。ログイン、権限による出し分け、お知らせの CRUD と予約公開を題材にしています。学習・参照用で、本番運用は想定していません。
 
@@ -192,3 +193,20 @@ vendor/bin/pint --test   # 検査だけする
 | PHPUnit | PHP 8.4 / 8.5 の両方で `php artisan test` |
 | Pint | `vendor/bin/pint --test` でコードスタイルを検査 |
 
+## ライセンス
+
+このリポジトリのコードは MIT ライセンスです。全文は [LICENSE](LICENSE) にあります（`composer.json` の `license` も `MIT` で揃えています）。
+
+複製・改変・再配布・商用利用のいずれも自由ですが、複製物または重要な部分には上記の著作権表示とライセンス本文を含めてください。無保証であり、作者は本ソフトウェアの利用によって生じた損害について責任を負いません。
+
+### 第三者のソフトウェア
+
+`composer install` / `npm install` で入る依存パッケージ（Laravel フレームワーク、PHPUnit、Pint、Vite、Tailwind CSS など）は、それぞれの配布元のライセンスに従います。このリポジトリの MIT ライセンスが及ぶのは、あくまでここにコミットされているコードだけです。依存パッケージのライセンスは、インストール後に次のコマンドで一覧できます。
+
+```bash
+composer licenses
+```
+
+### 学習用サンプルであることについて
+
+このリポジトリは学習・参照用のサンプルで、本番運用は想定していません。`database/seeders` に入っているアカウント（`admin@example.com` / `password` など）や `.env.example` の設定は、そのまま公開環境で使わないでください。ライセンス上は自由に利用できますが、安全性についての保証はありません。
