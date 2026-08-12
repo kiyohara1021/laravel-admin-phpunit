@@ -142,6 +142,10 @@ php artisan serve
 | 管理者 | admin@example.com | password |
 | 一般ユーザー（403 になる） | user@example.com | password |
 
+## 画面のスタイル
+
+スタイルは手書きの `public/css/admin.css` 1 枚で、管理画面・公開側・ログイン画面がそれぞれ `asset('css/admin.css')` で読み込みます。変えるときはこのファイルを直接編集します。
+
 ## PHPUnit
 
 ```bash
@@ -203,7 +207,7 @@ vendor/bin/pint --test   # 検査だけする
 
 ### 第三者のソフトウェア
 
-`composer install` / `npm install` で入る依存パッケージ（Laravel フレームワーク、PHPUnit、Pint、Vite、Tailwind CSS など）は、それぞれの配布元のライセンスに従います。このリポジトリの MIT ライセンスが及ぶのは、あくまでここにコミットされているコードだけです。依存パッケージのライセンスは、インストール後に次のコマンドで一覧できます。
+`composer install` で入る依存パッケージ（Laravel フレームワーク、PHPUnit、Pint など）は、それぞれの配布元のライセンスに従います。このリポジトリの MIT ライセンスが及ぶのは、あくまでここにコミットされているコードだけです。依存パッケージのライセンスは、インストール後に次のコマンドで一覧できます。
 
 ```bash
 composer licenses
