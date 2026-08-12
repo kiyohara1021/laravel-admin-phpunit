@@ -190,8 +190,10 @@ vendor/bin/pint --test   # 検査だけする
 
 | ジョブ | 内容 |
 | --- | --- |
-| PHPUnit | PHP 8.4 / 8.5 の両方で `php artisan test` |
-| Pint | `vendor/bin/pint --test` でコードスタイルを検査 |
+| PHPUnit (PHP 8.4) / PHPUnit (PHP 8.5) | それぞれの PHP で `php artisan test` |
+| Lint | `vendor/bin/pint --test` でコードスタイルを検査し、`composer validate --strict` で `composer.json` と `composer.lock` の整合を確認 |
+
+`main` は直接 push できないよう保護しています。変更はブランチを切って Pull Request にし、上の 3 つのチェックが緑になってからマージします。
 
 ## ライセンス
 
