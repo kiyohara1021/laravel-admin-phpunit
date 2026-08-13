@@ -1,29 +1,41 @@
 # Laravel Admin Panel × PHPUnit
 
 [![CI](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml/badge.svg)](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml)
+![Laravel 13](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
+![PHP 8.4 / 8.5](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php&logoColor=white)
+[![Latest release](https://img.shields.io/github/v/release/kiyohara1021/laravel-admin-phpunit)](https://github.com/kiyohara1021/laravel-admin-phpunit/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [日本語](README.md) | [English](README.en.md)
 
-A production-minded Laravel 13 admin panel sample whose behavior is specified by PHPUnit feature and unit tests. It demonstrates authentication, layered authorization, notice CRUD, scheduled publishing, soft deletion, filtering, and a public read-only surface.
+A security-conscious Laravel 13 learning and reference implementation that shows not only how to build an admin panel, but **how to lock down fragile authentication, authorization, search, and publication boundaries with PHPUnit**.
 
-This repository is intended for learning and reference, not direct production deployment.
+![Notice management with published, scheduled, and draft states](docs/images/admin-notices.jpg)
 
-## Highlights
+<p align="center">Manage published, scheduled, and draft notices with search, state filters, and soft deletion.</p>
 
-- Administrator login and logout with brute-force throttling
-- Dashboard counts by publication state
-- Notice creation, editing, scheduled publishing, soft deletion, restoration, and permanent deletion
-- Author attribution and null-safe ownership history
-- Keyword and state filters with escaped SQL `LIKE` wildcards
-- Public list and detail pages that never reveal draft, scheduled, or deleted records
-- Layered authorization using middleware, policies, and gates
-- 185 PHPUnit tests with 606 assertions
-- CI on PHP 8.4 and 8.5, Pint, dependency review, and Larastan level 7
+## Beyond a basic CRUD sample
+
+- Never leak draft, scheduled, or deleted records through public search
+- Keep middleware, policies, and form validation responsibilities separate
+- Model draft, published, and scheduled states with one `published_at` field
+- Treat `%`, `_`, and `!` as literal search input instead of SQL wildcards
+- Throttle login attempts by normalized email address and IP
+- Compare realistic Feature and Unit test boundaries
+
+See the [architecture overview](docs/architecture.md), [domain model](docs/domain-model.md), [search design](docs/search-and-filtering.md), and [testing strategy](docs/testing.md) for the details. The detailed documents are bilingual where practical and include code identifiers that map directly to the implementation.
+
+## Quality at a glance
+
+| PHPUnit | Static analysis | PHP matrix | Frontend build |
+| --- | --- | --- | --- |
+| 185 tests / 606 assertions | Larastan level 7 | 8.4 / 8.5 | Not required |
+
+CI runs PHPUnit, Pint, Larastan, Composer validation, and Dependency Review. The protected `main` branch requires a pull request and passing checks.
 
 ## Quick start
 
-PHP 8.4 or later and Composer are required.
+PHP `^8.4` and Composer are required. Node.js is not required.
 
 ```bash
 composer install
@@ -39,41 +51,63 @@ Open `http://localhost:8000`.
 | Role | Email | Password |
 | --- | --- | --- |
 | Administrator | `admin@example.com` | `password` |
-| Regular user (receives 403) | `user@example.com` | `password` |
+| Regular user (admin routes return 403) | `user@example.com` | `password` |
 
 These credentials are demonstration fixtures. Never use them in production.
 
-## Quality checks
+## Screens
+
+<table>
+  <tr>
+    <td><img src="docs/images/admin-dashboard.jpg" alt="Admin dashboard with counts by publication state"></td>
+    <td><img src="docs/images/admin-notice-form.jpg" alt="Notice form with scheduled publication date"></td>
+  </tr>
+  <tr>
+    <td align="center">Dashboard counts by publication state</td>
+    <td align="center">Draft, immediate, and scheduled publication</td>
+  </tr>
+</table>
+
+![Public notice list containing only published records](docs/images/public-notices.jpg)
+
+<p align="center">The public surface only exposes published notices. No login or API key is required.</p>
+
+## Behaviors under test
+
+- Administrator authentication, logout, and brute-force throttling
+- Notice CRUD, scheduled publication, soft deletion, restore, and force delete
+- Layered authorization with middleware, policies, and gates
+- Invalid state filters, pagination, and SQL wildcard escaping
+- Prevention of draft, scheduled, and deleted record leakage
+- HTML escaping and null-safe author history
+
+See the [testing strategy](docs/testing.md) for the file-by-file matrix.
+
+## Quality commands
 
 ```bash
-composer check
-composer test
-composer analyse
-composer lint
-composer security
+composer check     # PHPUnit + Larastan + Pint
+composer test      # PHPUnit
+composer analyse   # Larastan level 7
+composer lint      # Pint check
+composer security  # Known vulnerability audit
 ```
-
-Tests use an in-memory SQLite database and recreate the schema with `RefreshDatabase`. See the [Japanese README](README.md) for the complete explanation of the domain rules and test matrix.
-
-## Design notes
-
-- `EnsureUserIsAdmin` controls entry to the admin area.
-- `NoticePolicy` controls actions on notice resources.
-- `Notice::published()` is the mandatory starting scope for public queries.
-- `NoticeFilter` treats malformed GET filters as display state, not exceptional commands.
-- Search escapes `%`, `_`, and the escape character itself before executing a parameterized query.
-
-Read the [architecture overview](docs/architecture.md) for the request flow and security boundaries.
 
 ## Project documents
 
 - [Architecture](docs/architecture.md)
+- [Domain model](docs/domain-model.md)
+- [Search and filtering](docs/search-and-filtering.md)
+- [Testing strategy](docs/testing.md)
 - [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Security policy](SECURITY.md)
 - [Support policy](SUPPORT.md)
 
+## Production boundary
+
+This repository is for learning and reference. Production use requires removing demo credentials and adding password recovery, audit logging, backups, monitoring, and deployment-specific hardening.
+
 ## License
 
-Licensed under the [MIT License](LICENSE). Dependencies installed by Composer retain their respective licenses.
+[MIT License](LICENSE). Composer dependencies retain their respective licenses.
