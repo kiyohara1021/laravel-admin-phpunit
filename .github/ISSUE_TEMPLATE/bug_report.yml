@@ -1,0 +1,40 @@
+name: Bug report / 不具合報告
+description: 再現できる問題を報告する
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 何が起きましたか？ / What happened?
+      description: 実際の結果と期待する結果を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順 / Reproduction steps
+      placeholder: |
+        1. ログインする
+        2. ...
+        3. ...になる
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 環境 / Environment
+      placeholder: PHP 8.5, SQLite, Safari 20
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 確認 / Checklist
+      options:
+        - label: 既存Issueを検索しました / I searched existing issues
+          required: true
+        - label: 認証情報や個人情報を含みません / This contains no credentials or personal data
+          required: true
+        - label: 行動規範に同意します / I agree to follow the Code of Conduct
+          required: true

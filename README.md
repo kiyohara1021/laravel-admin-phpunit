@@ -3,6 +3,8 @@
 [![CI](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml/badge.svg)](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+[日本語](README.md) | [English](README.en.md)
+
 Laravel 13 で管理画面を作り、その振る舞いを PHPUnit の Feature / Unit テストで固めるまでを一通り示すサンプルです。ログイン、権限による出し分け、お知らせの CRUD と予約公開を題材にしています。学習・参照用で、本番運用は想定していません。
 
 ## できること
@@ -181,11 +183,15 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 | `tests/Unit/LoginRequestTest.php` | レート制限のキー（小文字化・トランスリテレーション・IP ごと） |
 | `tests/Unit/UserTest.php` | `User::isAdmin()`（管理者の定義が 1 か所であること） |
 
-## コードスタイル
+## 品質チェック
 
 ```bash
-vendor/bin/pint          # 修正する
-vendor/bin/pint --test   # 検査だけする
+composer check     # テスト・静的解析・コードスタイル
+composer test      # PHPUnit
+composer analyse   # Larastan（level 7）
+composer lint      # Pint（検査のみ）
+composer security  # Composer の既知脆弱性検査
+vendor/bin/pint    # コードスタイルを自動修正
 ```
 
 ## CI
@@ -195,9 +201,20 @@ vendor/bin/pint --test   # 検査だけする
 | ジョブ | 内容 |
 | --- | --- |
 | PHPUnit (PHP 8.4) / PHPUnit (PHP 8.5) | それぞれの PHP で `php artisan test` |
-| Lint | `vendor/bin/pint --test` でコードスタイルを検査し、`composer validate --strict` で `composer.json` と `composer.lock` の整合を確認 |
+| Lint | PintとComposer整合性を検査 |
+| Static analysis | Larastan level 7 でアプリケーションコードを静的解析 |
+| Dependency review | Pull Requestが既知の脆弱性を持つ依存関係を追加しないか検査 |
 
-`main` は直接 push できないよう保護しています。変更はブランチを切って Pull Request にし、上の 3 つのチェックが緑になってからマージします。
+`main` は直接 push できないよう保護しています。変更はブランチを切って Pull Request にし、すべてのチェックが緑になってからマージします。
+
+## プロジェクト文書
+
+- [設計概要](docs/architecture.md)
+- [変更履歴](CHANGELOG.md)
+- [コントリビューションガイド](CONTRIBUTING.md#日本語)
+- [行動規範](CODE_OF_CONDUCT.md#日本語)
+- [セキュリティポリシー](SECURITY.md#日本語)
+- [サポート方針](SUPPORT.md#日本語)
 
 ## ライセンス
 
