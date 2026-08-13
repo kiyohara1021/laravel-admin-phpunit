@@ -2,6 +2,8 @@
 
 このサンプルは、小さなLaravel管理画面でも「入力検証」「区画への入場」「資源ごとの認可」「公開範囲」を混ぜないことを主題にしています。
 
+English summary: authentication protects identity, the admin middleware protects the admin area, policies protect resource actions, Form Requests validate commands, and the `published()` scope protects the public surface. See also the [domain model](domain-model.md), [search design](search-and-filtering.md), and [testing strategy](testing.md).
+
 ## リクエストの流れ
 
 ```mermaid

@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Q&A / 使い方の質問
+    url: https://github.com/kiyohara1021/laravel-admin-phpunit/discussions/categories/q-a
+    about: 使い方や設計についての質問はDiscussionsへ投稿してください。
   - name: Security report / 脆弱性報告
     url: https://github.com/kiyohara1021/laravel-admin-phpunit/security/advisories/new
     about: 脆弱性は非公開で報告してください。
