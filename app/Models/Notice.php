@@ -12,7 +12,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $published_at
+ * @property User|null $user
+ */
 #[Fillable(['title', 'body', 'published_at'])]
 #[UsePolicy(NoticePolicy::class)]
 class Notice extends Model

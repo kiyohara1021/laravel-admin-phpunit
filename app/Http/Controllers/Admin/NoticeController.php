@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use LogicException;
 
 class NoticeController extends Controller
 {
@@ -92,26 +93,40 @@ class NoticeController extends Controller
     }
 
     /**
+     * FormRequest の検証結果を、モデルへ渡す境界で具体的な型に絞る。
+     *
      * @param  array<string, mixed>  $validated
-     * @return array<string, mixed>
+     * @return array{title: string, body: string, published_at: CarbonInterface|null}
      */
     private function noticeAttributes(array $validated, ?Notice $notice = null): array
     {
+        $title = $validated['title'] ?? null;
+        $body = $validated['body'] ?? null;
+        $status = $validated['status'] ?? null;
+        $publishedAt = $validated['published_at'] ?? null;
+
+        if (! is_string($title) || ! is_string($body) || ! is_string($status)) {
+            throw new LogicException('Validated notice attributes have an unexpected type.');
+        }
+
+        if ($publishedAt !== null && ! is_string($publishedAt)) {
+            throw new LogicException('Validated published_at has an unexpected type.');
+        }
+
         return [
-            'title' => $validated['title'],
-            'body' => $validated['body'],
-            'published_at' => $this->resolvePublishedAt($validated, $notice),
+            'title' => $title,
+            'body' => $body,
+            'published_at' => $this->resolvePublishedAt($status, $publishedAt, $notice),
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function resolvePublishedAt(array $validated, ?Notice $notice): ?CarbonInterface
+    private function resolvePublishedAt(string $status, ?string $publishedAt, ?Notice $notice): ?CarbonInterface
     {
-        return match (NoticeStatus::from($validated['status'])) {
+        return match (NoticeStatus::from($status)) {
             NoticeStatus::Draft => null,
-            NoticeStatus::Scheduled => Carbon::parse($validated['published_at']),
+            NoticeStatus::Scheduled => Carbon::parse(
+                $publishedAt ?? throw new LogicException('Scheduled notices require published_at.'),
+            ),
             // すでに公開済みなら初回の公開日時を保つ（編集のたびに繰り上がらないように）
             NoticeStatus::Published => $notice?->isPublished() ? $notice->published_at : now(),
         };

@@ -2,8 +2,13 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel-admin-phpunit/app",
     "type": "project",
-    "description": "Laravel admin panel sample with PHPUnit tests.",
-    "keywords": ["laravel", "framework"],
+    "description": "A production-minded Laravel admin panel sample backed by PHPUnit feature and unit tests.",
+    "keywords": ["laravel", "admin-panel", "phpunit", "authorization", "testing"],
+    "homepage": "https://github.com/kiyohara1021/laravel-admin-phpunit",
+    "support": {
+        "issues": "https://github.com/kiyohara1021/laravel-admin-phpunit/issues",
+        "source": "https://github.com/kiyohara1021/laravel-admin-phpunit"
+    },
     "license": "MIT",
     "require": {
         "php": "^8.4",
@@ -12,6 +17,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.10",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
         "laravel/pint": "^1.27",
@@ -45,6 +51,14 @@
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
+        ],
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "lint": "pint --test",
+        "security": "composer audit --locked",
+        "check": [
+            "@test",
+            "@analyse",
+            "@lint"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
