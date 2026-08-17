@@ -78,7 +78,7 @@ class PublicNoticeTest extends TestCase
 
         $response = $this->get(route('notices.index'))->assertOk();
 
-        $this->assertCount(10, $response->viewData('notices'), '1 ページ目には 10 件だけ並ぶ');
+        $this->assertCount(10, $this->noticesOf($response), '1 ページ目には 10 件だけ並ぶ');
         $response->assertSee('/notices?page=2', escape: false);
     }
 
@@ -90,8 +90,8 @@ class PublicNoticeTest extends TestCase
         $first = $this->get(route('notices.index'))->assertOk();
         $second = $this->get(route('notices.index', ['page' => 2]))->assertOk();
 
-        $ids = $first->viewData('notices')->pluck('id')
-            ->merge($second->viewData('notices')->pluck('id'));
+        $ids = $this->noticesOf($first)->pluck('id')
+            ->merge($this->noticesOf($second)->pluck('id'));
 
         $this->assertSame(11, $ids->unique()->count(), '2 ページ合わせて 11 件すべてが 1 度ずつ出ること');
     }

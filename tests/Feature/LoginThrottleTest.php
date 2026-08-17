@@ -6,6 +6,7 @@ use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -18,6 +19,9 @@ class LoginThrottleTest extends TestCase
 
     private const CREDENTIALS_MESSAGE = 'メールアドレスまたはパスワードが正しくありません。';
 
+    /**
+     * @return TestResponse<Response>
+     */
     private function postLogin(string $email, string $password): TestResponse
     {
         return $this->from(route('login'))->post(route('login.store'), [
@@ -38,12 +42,14 @@ class LoginThrottleTest extends TestCase
 
     /**
      * リダイレクト先セッションに入ったメールアドレス欄のエラー文言を取り出す。
+     *
+     * @param  TestResponse<Response>  $response
      */
     private function emailError(TestResponse $response): string
     {
         $response->assertSessionHasErrors('email');
 
-        return session('errors')->first('email');
+        return $this->firstError('email');
     }
 
     public function test_login_is_blocked_after_five_failed_attempts(): void
@@ -121,9 +127,14 @@ class LoginThrottleTest extends TestCase
 
         preg_match('/(\d+) 秒後/', $this->emailError($response), $matches);
 
-        $this->assertNotEmpty($matches, '残り秒数がメッセージに含まれること');
-        $this->assertGreaterThan(0, (int) $matches[1], '残り秒数は 0 より大きいこと');
-        $this->assertLessThanOrEqual(LoginRequest::DECAY_SECONDS, (int) $matches[1], '残り秒数は待ち時間を超えないこと');
+        if (! isset($matches[1])) {
+            $this->fail('残り秒数がメッセージに含まれること');
+        }
+
+        $seconds = (int) $matches[1];
+
+        $this->assertGreaterThan(0, $seconds, '残り秒数は 0 より大きいこと');
+        $this->assertLessThanOrEqual(LoginRequest::DECAY_SECONDS, $seconds, '残り秒数は待ち時間を超えないこと');
     }
 
     public function test_attempts_before_the_limit_show_the_credentials_error(): void

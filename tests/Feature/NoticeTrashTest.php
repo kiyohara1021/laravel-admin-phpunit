@@ -118,7 +118,7 @@ class NoticeTrashTest extends TestCase
             ->get(route('admin.notices.trashed'))
             ->assertOk();
 
-        $this->assertCount(10, $response->viewData('notices'), '1 ページ目には 10 件だけ並ぶ');
+        $this->assertCount(10, $this->noticesOf($response), '1 ページ目には 10 件だけ並ぶ');
         $response->assertSee('/admin/notices/trashed?page=2', escape: false);
     }
 

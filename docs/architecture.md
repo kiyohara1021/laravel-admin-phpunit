@@ -50,7 +50,7 @@ flowchart LR
 
 - Featureテスト: ルート、ミドルウェア、認可、DB、BladeをHTTP経由でまとめて検証
 - Unitテスト: 状態判定、クエリスコープ、Policy、値オブジェクト、レート制限キーを局所的に検証
-- 静的解析: Larastan level 7でEloquent属性、コントローラ境界、設定値の型を検査
+- 静的解析: Larastan level 10でEloquent属性、コントローラ境界、設定値の型を検査
 - コードスタイル: Pint
 - 依存関係: `composer validate --strict`、Dependency Review、Dependabot（手元では `composer security`）
 

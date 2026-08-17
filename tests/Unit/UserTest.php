@@ -22,7 +22,8 @@ class UserTest extends TestCase
     public function test_is_admin_is_strict_about_its_value(): void
     {
         $user = User::factory()->create();
-        $user->is_admin = 1;
+        // キャストを通す前の生の値を入れたいので、プロパティではなく属性として書き込む
+        $user->setAttribute('is_admin', 1);
 
         $this->assertTrue($user->isAdmin(), 'boolean にキャストされてから判定する');
     }

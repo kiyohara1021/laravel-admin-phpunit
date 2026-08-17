@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # 依存の脆弱性は、こちらがコードを触らなくても後から公表される。
+  # Dependabot と同じ月曜朝に、据え置きのままでも一度は検査する
+  schedule:
+    - cron: '0 0 * * 1'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -57,6 +61,60 @@ jobs:
 
       - name: テストを実行
         run: php artisan test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: PHP をセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, curl, dom, fileinfo, mbstring, openssl, pdo, pdo_sqlite, sqlite3, tokenizer, xml
+          # PHPUnit 12 が使える計測ドライバは Xdebug と PCOV だけ。速い方を選ぶ
+          coverage: pcov
+
+      - name: Composer のキャッシュディレクトリを取得
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Composer をキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php8.4-
+
+      - name: .env を用意
+        run: cp .env.example .env
+
+      - name: 依存関係をインストール
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: アプリケーションキーを生成
+        run: php artisan key:generate
+
+      # 既定のシェルは pipefail を立てないので、tee の 0 で失敗を握り潰さないようにする
+      - name: カバレッジを計測
+        shell: bash
+        run: php artisan test --coverage | tee coverage.txt
+
+      # 数字をログの奥に埋めず、実行結果の要約に出す
+      - name: 結果を要約に出す
+        if: always()
+        shell: bash
+        run: |
+          [ -f coverage.txt ] || exit 0
+          {
+            echo '## Coverage'
+            echo '```'
+            tail -n 40 coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   lint:
     name: Lint
@@ -126,6 +184,24 @@ jobs:
 
       - name: Larastan で静的解析
         run: composer analyse
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: PHP をセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      # --locked なら composer.lock だけを見るので、インストールは要らない
+      - name: 依存に既知の脆弱性がないか検査
+        run: composer audit --locked
 
   dependency-review:
     name: Dependency review

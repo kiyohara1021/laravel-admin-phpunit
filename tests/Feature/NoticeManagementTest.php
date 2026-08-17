@@ -98,6 +98,7 @@ class NoticeManagementTest extends TestCase
 
         $this->assertSame(NoticeStatus::Scheduled, $notice->status());
         $this->assertFalse($notice->isPublished());
+        $this->assertNotNull($notice->published_at);
         $this->assertSame(
             $publishAt->format('Y-m-d H:i'),
             $notice->published_at->format('Y-m-d H:i')
@@ -187,7 +188,7 @@ class NoticeManagementTest extends TestCase
             'body' => '更新後の本文',
         ]);
 
-        $this->assertTrue($notice->fresh()->isPublished());
+        $this->assertTrue($notice->refresh()->isPublished());
     }
 
     public function test_updating_a_published_notice_keeps_its_original_published_at(): void
@@ -204,9 +205,12 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.index'));
 
+        $notice->refresh();
+
+        $this->assertNotNull($notice->published_at);
         $this->assertSame(
             $publishedAt->format('Y-m-d H:i:s'),
-            $notice->fresh()->published_at->format('Y-m-d H:i:s')
+            $notice->published_at->format('Y-m-d H:i:s')
         );
     }
 
@@ -223,8 +227,10 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.index'));
 
-        $this->assertTrue($notice->fresh()->isDraft());
-        $this->assertNull($notice->fresh()->published_at);
+        $notice->refresh();
+
+        $this->assertTrue($notice->isDraft());
+        $this->assertNull($notice->published_at);
     }
 
     public function test_admin_can_delete_a_notice(): void
@@ -292,7 +298,7 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.index'));
 
-        $this->assertSame($author->id, $notice->fresh()->user_id, '入力で作成者を差し替えられないこと');
+        $this->assertSame($author->id, $notice->refresh()->user_id, '入力で作成者を差し替えられないこと');
     }
 
     public function test_updating_a_notice_keeps_its_original_author(): void
@@ -309,7 +315,7 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.index'));
 
-        $this->assertSame($author->id, $notice->fresh()->user_id, '更新しても作成者は変わらないこと');
+        $this->assertSame($author->id, $notice->refresh()->user_id, '更新しても作成者は変わらないこと');
     }
 
     public function test_notice_index_shows_the_author_name(): void
@@ -355,6 +361,7 @@ class NoticeManagementTest extends TestCase
     {
         $user = User::factory()->create();
         $notice = Notice::factory()->create();
+        $originalTitle = $notice->title;
 
         $this->actingAs($user)
             ->get(route('admin.notices.index'))
@@ -385,8 +392,8 @@ class NoticeManagementTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame(
-            $notice->title,
-            $notice->fresh()->title,
+            $originalTitle,
+            $notice->refresh()->title,
             '403 で止まるので中身は書き換わらない'
         );
     }

@@ -155,9 +155,9 @@ class NoticeTest extends TestCase
 
         $notice->restore();
 
-        $this->assertNull($notice->fresh()->deleted_at, 'deleted_at が null に戻ること');
+        $this->assertNull($notice->refresh()->deleted_at, 'deleted_at が null に戻ること');
         $this->assertTrue(
-            Notice::query()->published()->pluck('title')->contains('復元するお知らせ'),
+            Notice::query()->published()->where('title', '復元するお知らせ')->exists(),
             '復元すると公開中に戻ること'
         );
     }

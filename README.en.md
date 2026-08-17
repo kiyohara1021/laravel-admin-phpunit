@@ -27,15 +27,17 @@ See the [architecture overview](docs/architecture.md), [domain model](docs/domai
 
 ## Quality at a glance
 
-| PHPUnit | Static analysis | PHP matrix | Frontend build |
-| --- | --- | --- | --- |
-| 185 tests / 606 assertions | Larastan level 7 | 8.4 / 8.5 | Not required |
+| PHPUnit | Static analysis | PHP matrix |
+| --- | --- | --- |
+| 185 tests / 674 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
 
-CI runs PHPUnit, Pint, Larastan, Composer validation, and Dependency Review. The protected `main` branch requires a pull request and passing checks.
+Tests run in a randomized order, and risky tests, warnings, and deprecations all fail the build. See the [testing strategy](docs/testing.md) for the details.
+
+CI runs PHPUnit, coverage, Pint, Larastan, Composer validation, a dependency audit, and Dependency Review. The protected `main` branch requires a pull request and passing checks.
 
 ## Quick start
 
-PHP `^8.4` and Composer are required. Node.js is not required.
+PHP `^8.4` and Composer are required.
 
 ```bash
 composer install
@@ -88,7 +90,7 @@ See the [testing strategy](docs/testing.md) for the file-by-file matrix.
 ```bash
 composer check     # PHPUnit + Larastan + Pint
 composer test      # PHPUnit
-composer analyse   # Larastan level 7
+composer analyse   # Larastan level 10
 composer lint      # Pint check
 composer security  # Known vulnerability audit
 ```

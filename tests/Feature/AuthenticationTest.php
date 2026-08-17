@@ -57,10 +57,8 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email', 'password']);
 
-        $errors = session('errors');
-
-        $this->assertStringContainsString('メールアドレス', $errors->first('email'), 'メールアドレスの属性名が日本語になること');
-        $this->assertStringContainsString('パスワード', $errors->first('password'), 'パスワードの属性名が日本語になること');
+        $this->assertStringContainsString('メールアドレス', $this->firstError('email'), 'メールアドレスの属性名が日本語になること');
+        $this->assertStringContainsString('パスワード', $this->firstError('password'), 'パスワードの属性名が日本語になること');
         $this->assertGuest();
     }
 
@@ -74,7 +72,7 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors('email');
 
-        $this->assertStringContainsString('メールアドレス', session('errors')->first('email'), 'メールアドレスの属性名が日本語になること');
+        $this->assertStringContainsString('メールアドレス', $this->firstError('email'), 'メールアドレスの属性名が日本語になること');
         $this->assertGuest();
     }
 

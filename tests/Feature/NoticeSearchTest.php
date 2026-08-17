@@ -119,7 +119,7 @@ class NoticeSearchTest extends TestCase
             ->assertDontSee('selected', escape: false)
             ->assertDontSee('該当');
 
-        $this->assertCount(2, $response->viewData('notices'), '不正な状態は無視して全件を出す');
+        $this->assertCount(2, $this->noticesOf($response), '不正な状態は無視して全件を出す');
     }
 
     public function test_admin_index_ignores_a_blank_keyword(): void
@@ -131,7 +131,7 @@ class NoticeSearchTest extends TestCase
             ->assertOk()
             ->assertDontSee('該当');
 
-        $this->assertCount(2, $response->viewData('notices'), '空白だけなら絞り込まない');
+        $this->assertCount(2, $this->noticesOf($response), '空白だけなら絞り込まない');
     }
 
     public function test_admin_index_shows_how_many_notices_matched(): void
@@ -173,7 +173,7 @@ class NoticeSearchTest extends TestCase
             ->get(route('admin.notices.index', ['q' => 'abc', 'status' => 'draft']))
             ->assertOk();
 
-        $next = $response->viewData('notices')->nextPageUrl();
+        $next = $this->nextPageUrlOf($response);
 
         $this->assertStringContainsString('q=abc', $next, '次ページのリンクがキーワードを保つ');
         $this->assertStringContainsString('status=draft', $next, '次ページのリンクが状態を保つ');
@@ -190,8 +190,8 @@ class NoticeSearchTest extends TestCase
             ->assertOk()
             ->assertDontSee('xyz のお知らせ');
 
-        $this->assertCount(1, $response->viewData('notices'), '2 ページ目でも条件が効いて残り 1 件だけ');
-        $this->assertSame(11, $response->viewData('notices')->total(), '該当は 11 件のまま');
+        $this->assertCount(1, $this->noticesOf($response), '2 ページ目でも条件が効いて残り 1 件だけ');
+        $this->assertSame(11, $this->noticesOf($response)->total(), '該当は 11 件のまま');
     }
 
     public function test_admin_index_treats_a_percent_sign_literally(): void
@@ -206,7 +206,7 @@ class NoticeSearchTest extends TestCase
             ->assertSee('達成率 100% のお知らせ')
             ->assertDontSee('達成率 100 パーセントのお知らせ');
 
-        $this->assertCount(1, $response->viewData('notices'), '% がワイルドカードにならず全件にならない');
+        $this->assertCount(1, $this->noticesOf($response), '% がワイルドカードにならず全件にならない');
     }
 
     public function test_admin_index_search_does_not_show_soft_deleted_notices(): void
@@ -340,7 +340,7 @@ class NoticeSearchTest extends TestCase
 
         $this->assertStringContainsString(
             'q=abc',
-            $response->viewData('notices')->nextPageUrl(),
+            $this->nextPageUrlOf($response),
             'ゴミ箱の次ページのリンクもキーワードを保つ'
         );
     }
@@ -370,7 +370,7 @@ class NoticeSearchTest extends TestCase
             ->assertSee('捨てた公開のもの')
             ->assertSee('捨てた下書きのもの');
 
-        $this->assertCount(2, $response->viewData('notices'), 'ゴミ箱は状態で絞り込まない');
+        $this->assertCount(2, $this->noticesOf($response), 'ゴミ箱は状態で絞り込まない');
     }
 
     // 公開側の一覧
@@ -419,7 +419,7 @@ class NoticeSearchTest extends TestCase
             ->assertDontSee('共通語を含むあとで出るもの')
             ->assertDontSee('共通語を含む捨てたもの');
 
-        $this->assertCount(1, $response->viewData('notices'), '検索しても公開中の 1 件しか出ない');
+        $this->assertCount(1, $this->noticesOf($response), '検索しても公開中の 1 件しか出ない');
     }
 
     public function test_public_index_ignores_a_status_parameter(): void
@@ -432,7 +432,7 @@ class NoticeSearchTest extends TestCase
             ->assertSee('いま読めるもの')
             ->assertDontSee('まだ書いているもの');
 
-        $this->assertCount(1, $response->viewData('notices'), '公開側は status を受け取っても公開中だけ');
+        $this->assertCount(1, $this->noticesOf($response), '公開側は status を受け取っても公開中だけ');
     }
 
     public function test_public_search_keeps_the_keyword_in_the_pagination_links(): void
@@ -443,7 +443,7 @@ class NoticeSearchTest extends TestCase
 
         $this->assertStringContainsString(
             'q=abc',
-            $response->viewData('notices')->nextPageUrl(),
+            $this->nextPageUrlOf($response),
             '公開側の次ページのリンクもキーワードを保つ'
         );
     }
@@ -479,7 +479,7 @@ class NoticeSearchTest extends TestCase
             ->assertSee('達成率 100% のお知らせ')
             ->assertDontSee('達成率 100 パーセントのお知らせ');
 
-        $this->assertCount(1, $response->viewData('notices'), '% がワイルドカードにならず全件にならない');
+        $this->assertCount(1, $this->noticesOf($response), '% がワイルドカードにならず全件にならない');
     }
 
     public function test_public_search_form_does_not_leak_the_admin_layout_words(): void

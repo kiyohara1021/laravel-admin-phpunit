@@ -27,15 +27,17 @@ Laravel 13の管理画面を「作る」だけでなく、**認証・認可・�
 
 ## 品質の証拠
 
-| PHPUnit | 静的解析 | 対応PHP | フロントエンドビルド |
-| --- | --- | --- | --- |
-| 185 tests / 606 assertions | Larastan level 7 | 8.4 / 8.5 | 不要 |
+| PHPUnit | 静的解析 | 対応PHP |
+| --- | --- | --- |
+| 185 tests / 674 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 |
 
-CIではPHPUnit、Pint、Larastan、Composer整合性、Dependency Reviewを実行します。`main`はPull Requestと必須チェックで保護しています。
+テストは実行順をランダム化し、risky・警告・非推奨をすべて失敗として扱います。詳細は[テスト戦略](docs/testing.md)にまとめています。
+
+CIではPHPUnit、カバレッジ計測、Pint、Larastan、Composer整合性、依存の脆弱性検査、Dependency Reviewを実行します。`main`はPull Requestと必須チェックで保護しています。
 
 ## クイックスタート
 
-PHP `^8.4` とComposerが必要です。Node.jsは不要です。
+PHP `^8.4` とComposerが必要です。
 
 ```bash
 composer install
@@ -88,7 +90,7 @@ php artisan serve
 ```bash
 composer check     # PHPUnit + Larastan + Pint
 composer test      # PHPUnit
-composer analyse   # Larastan level 7
+composer analyse   # Larastan level 10
 composer lint      # Pint（検査のみ）
 composer security  # 既知脆弱性の検査
 ```
