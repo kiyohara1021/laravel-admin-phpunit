@@ -1,0 +1,96 @@
+name: Dependabot auto-merge
+
+# CI の完了後に起動し、CI が成功した Dependabot の patch / minor 更新だけをマージする。
+# メジャー更新は対象外（手動で確認する）。
+# ブランチ保護（Free プランの private リポジトリでは使えない）に頼らず、CI の結果をここで判定する。
+# このワークフローは PR のコードをチェックアウトも実行もしない。
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read
+  statuses: read
+
+jobs:
+  automerge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge patch/minor Dependabot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh pr list --author app/dependabot --state open --head "$HEAD_BRANCH" \
+            --json number,headRefOid \
+            --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
+          if [ -z "$pr" ]; then
+            echo "対象の Dependabot PR がない（または既に更新されている）ためスキップ"
+            exit 0
+          fi
+
+          # コミットメッセージの "from X to Y" から更新種別を判定する（patch / minor のみ許可）
+          # 1.x 以降はメジャー番号が同じなら許可し、0.x は minor が同じ（= patch のみ）なら許可する
+          message=$(gh api "repos/$GH_REPO/commits/$HEAD_SHA" --jq .commit.message)
+          pairs=$(printf '%s\n' "$message" \
+            | grep -oE 'from [0-9][0-9A-Za-z.+-]* to [0-9][0-9A-Za-z.+-]*' | sed 's/\.*$//' || true)
+          if [ -z "$pairs" ]; then
+            echo "バージョン差を読み取れないためスキップ（手動で確認）"
+            exit 0
+          fi
+          risky=0
+          while read -r _ old _ new; do
+            IFS=. read -r old_major old_minor _ <<< "$old"
+            IFS=. read -r new_major new_minor _ <<< "$new"
+            old_major=${old_major//[!0-9]/}; new_major=${new_major//[!0-9]/}
+            old_minor=${old_minor//[!0-9]/}; new_minor=${new_minor//[!0-9]/}
+            if [ -z "$old_major" ] || [ -z "$new_major" ] || [ "$old_major" != "$new_major" ]; then
+              risky=1
+            elif [ "$old_major" = "0" ] && [ "$old_minor" != "$new_minor" ]; then
+              risky=1
+            fi
+          done <<< "$pairs"
+          if [ "$risky" = "1" ]; then
+            echo "メジャー更新（または 0.x の minor 更新）を含むためスキップ（手動で確認）"
+            exit 0
+          fi
+
+          # 他のチェックが失敗・未完了の PR はマージしない（未完了なら完了時にもう一度起動される）
+          bad=$(gh pr view "$pr" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]
+              | select((.workflowName // "") != "Dependabot auto-merge")
+              | (.conclusion // "SUCCESS") as $c
+              | (.state // "SUCCESS") as $s
+              | select(
+                  ((.status // "COMPLETED") != "COMPLETED")
+                  or ((["FAILURE","CANCELLED","TIMED_OUT","ACTION_REQUIRED","STARTUP_FAILURE"] | index($c)) != null)
+                  or ((["FAILURE","ERROR","PENDING"] | index($s)) != null)
+                )
+            ] | length')
+          if [ "$bad" != "0" ]; then
+            echo "失敗または未完了のチェックが $bad 件あるためスキップ"
+            exit 0
+          fi
+
+          mergeable=$(gh pr view "$pr" --json mergeable --jq .mergeable)
+          if [ "$mergeable" = "CONFLICTING" ]; then
+            echo "コンフリクト中のためスキップ（Dependabot の rebase を待つ）"
+            exit 0
+          fi
+
+          echo "PR #$pr をマージする"
+          # gh pr merge は内部で GraphQL の statusCheckRollup を読むため、権限不足になりやすい。REST を直接使う
+          gh api -X PUT "repos/$GH_REPO/pulls/$pr/merge" -f merge_method=squash
+          gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$HEAD_BRANCH" || true
