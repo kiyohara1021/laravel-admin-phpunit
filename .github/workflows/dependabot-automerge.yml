@@ -30,6 +30,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          DEV_ONLY: "false"
         run: |
           set -euo pipefail
 
@@ -67,6 +68,16 @@ jobs:
             exit 0
           fi
 
+          # 本番へ自動デプロイされるリポジトリでは、開発用の依存（direct:development）だけを自動マージする
+          if [ "$DEV_ONLY" = "true" ]; then
+            dep_types=$(printf '%s\n' "$message" | sed -n 's/^ *dependency-type: *//p')
+            non_dev=$(printf '%s\n' "$dep_types" | awk '$0 != "direct:development" { c++ } END { print c + 0 }')
+            if [ -z "$dep_types" ] || [ "$non_dev" != "0" ]; then
+              echo "開発用依存のみ自動マージする設定のためスキップ（手動で確認）"
+              exit 0
+            fi
+          fi
+
           # 他のチェックが失敗・未完了の PR はマージしない（未完了なら完了時にもう一度起動される）
           bad=$(gh pr view "$pr" --json statusCheckRollup --jq '
             [.statusCheckRollup[]
@@ -92,5 +103,24 @@ jobs:
 
           echo "PR #$pr をマージする"
           # gh pr merge は内部で GraphQL の statusCheckRollup を読むため、権限不足になりやすい。REST を直接使う
-          gh api -X PUT "repos/$GH_REPO/pulls/$pr/merge" -f merge_method=squash
+          # 複数の Dependabot PR が同時にマージされると "Base branch was modified" (405) になるため、間隔を空けて再試行する
+          merged=0
+          for attempt in 1 2 3 4 5; do
+            if out=$(gh api -X PUT "repos/$GH_REPO/pulls/$pr/merge" -f merge_method=squash 2>&1); then
+              merged=1
+              break
+            fi
+            echo "マージに失敗（試行 $attempt/5）: $out"
+            case "$out" in
+              *"Base branch was modified"*) sleep $((attempt * 10 + RANDOM % 10));;
+              *"not mergeable"*)
+                echo "コンフリクト中のためスキップ（Dependabot の rebase 後に CI が再実行されて再度起動される）"
+                exit 0;;
+              *) break;;
+            esac
+          done
+          if [ "$merged" != "1" ]; then
+            echo "マージできなかった"
+            exit 1
+          fi
           gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$HEAD_BRANCH" || true
