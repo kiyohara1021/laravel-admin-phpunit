@@ -443,7 +443,9 @@ class NoticeSearchTest extends TestCase
             ->assertOk()
             ->assertSee('前へ')
             ->assertSee('次へ')
+            ->assertSeeText('11 件中 1〜10 件を表示')
             ->assertDontSee('Previous')
+            ->assertDontSee('Showing')
             ->assertDontSee('Next');
 
         $this->assertStringContainsString(

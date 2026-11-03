@@ -119,7 +119,7 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('published_at');
 
-        $this->assertStringContainsString('必須', $this->firstError('published_at'));
+        $this->assertSame('状態が予約公開の場合、公開日時は必須です。', $this->firstError('published_at'));
         $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
         $this->assertDatabaseMissing('notices', ['title' => '日時なしの予約公開']);
     }
@@ -139,7 +139,7 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('published_at');
 
-        $this->assertStringContainsString('有効な日付', $this->firstError('published_at'));
+        $this->assertSame('公開日時には有効な日付を指定してください。', $this->firstError('published_at'));
         $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
         $this->assertDatabaseMissing('notices', ['title' => '不正な日時の予約公開']);
     }
@@ -159,7 +159,7 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('published_at');
 
-        $this->assertStringContainsString('より後の日付', $this->firstError('published_at'));
+        $this->assertSame('公開日時には未来の日時を指定してください。', $this->firstError('published_at'));
         $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
         $this->assertDatabaseMissing('notices', ['title' => '過去日時の予約公開']);
     }
@@ -177,8 +177,8 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors(['title', 'body']);
 
-        $this->assertStringContainsString('必須', $this->firstError('title'));
-        $this->assertStringContainsString('必須', $this->firstError('body'));
+        $this->assertSame('タイトルは必須です。', $this->firstError('title'));
+        $this->assertSame('本文は必須です。', $this->firstError('body'));
     }
 
     public function test_notice_creation_rejects_an_overlong_title(): void
@@ -195,7 +195,7 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('title');
 
-        $this->assertStringContainsString('100 文字以下', $this->firstError('title'));
+        $this->assertSame('タイトルは100文字以下で入力してください。', $this->firstError('title'));
         $this->assertStringContainsString('タイトル', $this->firstError('title'));
     }
 
@@ -213,7 +213,7 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('status');
 
-        $this->assertStringContainsString('無効', $this->firstError('status'));
+        $this->assertSame('選択された状態は無効です。', $this->firstError('status'));
         $this->assertStringContainsString('状態', $this->firstError('status'));
     }
 
