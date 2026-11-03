@@ -207,7 +207,29 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('published_at');
 
+        $this->assertSame('状態が予約公開の場合、公開日時は必須です。', $this->firstError('published_at'));
+        $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
         $this->assertDatabaseMissing('notices', ['title' => '日時なしの予約公開']);
+    }
+
+    public function test_scheduling_requires_a_valid_date_for_published_at(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.notices.create'))
+            ->post(route('admin.notices.store'), [
+                'title' => '不正な日時の予約公開',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => 'invalid-date',
+            ])
+            ->assertRedirect(route('admin.notices.create'))
+            ->assertSessionHasErrors('published_at');
+
+        $this->assertSame('公開日時には有効な日付を指定してください。', $this->firstError('published_at'));
+        $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
+        $this->assertDatabaseMissing('notices', ['title' => '不正な日時の予約公開']);
     }
 
     public function test_scheduling_rejects_a_past_published_at(): void
@@ -225,6 +247,8 @@ class NoticeManagementTest extends TestCase
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('published_at');
 
+        $this->assertSame('公開日時には未来の日時を指定してください。', $this->firstError('published_at'));
+        $this->assertStringContainsString('公開日時', $this->firstError('published_at'));
         $this->assertDatabaseMissing('notices', ['title' => '過去日時の予約公開']);
     }
 
@@ -240,6 +264,27 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors(['title', 'body']);
+
+        $this->assertSame('タイトルは必須です。', $this->firstError('title'));
+        $this->assertSame('本文は必須です。', $this->firstError('body'));
+    }
+
+    public function test_notice_creation_rejects_an_overlong_title(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.notices.create'))
+            ->post(route('admin.notices.store'), [
+                'title' => str_repeat('あ', 101),
+                'body' => '本文です。',
+                'status' => NoticeStatus::Published->value,
+            ])
+            ->assertRedirect(route('admin.notices.create'))
+            ->assertSessionHasErrors('title');
+
+        $this->assertSame('タイトルは100文字以下で入力してください。', $this->firstError('title'));
+        $this->assertStringContainsString('タイトル', $this->firstError('title'));
     }
 
     public function test_notice_creation_rejects_an_unknown_status(): void
@@ -255,6 +300,9 @@ class NoticeManagementTest extends TestCase
             ])
             ->assertRedirect(route('admin.notices.create'))
             ->assertSessionHasErrors('status');
+
+        $this->assertSame('選択された状態は無効です。', $this->firstError('status'));
+        $this->assertStringContainsString('状態', $this->firstError('status'));
     }
 
     public function test_admin_can_update_a_notice(): void
