@@ -47,6 +47,22 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_non_admin_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create();
+
+        $this->from(route('login'))
+            ->post(route('login.store'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame('メールアドレスまたはパスワードが正しくありません。', $this->firstError('email'));
+        $this->assertGuest();
+    }
+
     public function test_login_requires_an_email_and_a_password(): void
     {
         $this->from(route('login'))
@@ -89,6 +105,15 @@ class AuthenticationTest extends TestCase
         $this->actingAs($user)
             ->get(route('login'))
             ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_authenticated_non_admin_users_are_redirected_to_public_notices(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('login'))
+            ->assertRedirect(route('notices.index'));
     }
 
     public function test_users_can_logout(): void
