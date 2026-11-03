@@ -57,6 +57,8 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email', 'password']);
 
+        $this->assertStringContainsString('必須', $this->firstError('email'), '必須エラーが日本語になること');
+        $this->assertStringContainsString('必須', $this->firstError('password'), '必須エラーが日本語になること');
         $this->assertStringContainsString('メールアドレス', $this->firstError('email'), 'メールアドレスの属性名が日本語になること');
         $this->assertStringContainsString('パスワード', $this->firstError('password'), 'パスワードの属性名が日本語になること');
         $this->assertGuest();
