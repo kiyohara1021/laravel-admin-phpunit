@@ -48,10 +48,20 @@ SQLiteでは`ESCAPE`句を明示しないと、エスケープ済みの記号が
 
 バックスラッシュを避ける理由は、Laravelの`toRawSql()` / `dumpRawSql()`がデバッグ用SQLを組み立てる際の引用符判定を読みやすく保つためです。実行クエリだけでなく、調査時の出力も誤読しにくくします。
 
+## 大文字・小文字の扱い（DB差異）
+
+`search()`は`title like ? escape '!'` / `body like ? escape '!'`を使うため、LIKEの大文字・小文字判定はDB依存です。
+
+- SQLite（このリポジトリの既定）: ASCII は大文字・小文字を区別しない
+- MySQL: 照合順序（`*_ci` など）に依存
+- PostgreSQL: 大文字・小文字を区別する
+
+このリポジトリでは学習用サンプルとして実装は変えず、DBごとの差異を仕様として明記します。DBを切り替える場合は、必要に応じて照合順序やクエリ（`lower()`利用など）を利用側で選んでください。
+
 ## 表示状態の値オブジェクト
 
 `App\Support\NoticeFilter`がGETクエリをtrimし、不明な状態を`null`へ正規化します。POST / PUTの本文はFormRequestで検証しますが、表示用GETパラメータは古いブックマークやタイポを壊さない値オブジェクトとして扱います。
 
 ## English summary
 
-Search scopes are always composed under the publication scope, wildcard characters are escaped explicitly for SQLite, and malformed GET filters degrade to an unfiltered view rather than an exception.
+Search scopes are always composed under the publication scope, wildcard characters are escaped explicitly for SQLite, malformed GET filters degrade to an unfiltered view, and LIKE case-sensitivity remains database-dependent by design.
