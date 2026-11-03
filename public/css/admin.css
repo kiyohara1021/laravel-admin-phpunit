@@ -329,6 +329,10 @@ textarea {
     align-items: center;
 }
 
+.public-logout {
+    margin: 0 0 0 auto;
+}
+
 .public-brand {
     margin: 0;
     font-size: 18px;
