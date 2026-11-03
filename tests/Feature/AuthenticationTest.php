@@ -47,6 +47,22 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_non_admin_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create();
+
+        $this->from(route('login'))
+            ->post(route('login.store'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame('メールアドレスまたはパスワードが正しくありません。', $this->firstError('email'));
+        $this->assertGuest();
+    }
+
     public function test_login_requires_an_email_and_a_password(): void
     {
         $this->from(route('login'))
@@ -57,6 +73,8 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email', 'password']);
 
+        $this->assertSame('メールアドレスは必須です。', $this->firstError('email'));
+        $this->assertSame('パスワードは必須です。', $this->firstError('password'));
         $this->assertStringContainsString('メールアドレス', $this->firstError('email'), 'メールアドレスの属性名が日本語になること');
         $this->assertStringContainsString('パスワード', $this->firstError('password'), 'パスワードの属性名が日本語になること');
         $this->assertGuest();
@@ -89,6 +107,36 @@ class AuthenticationTest extends TestCase
         $this->actingAs($user)
             ->get(route('login'))
             ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_authenticated_non_admin_users_are_redirected_to_public_notices(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('login'))
+            ->assertRedirect(route('notices.index'));
+    }
+
+    public function test_authenticated_non_admin_users_can_log_out_from_public_pages(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('notices.index'))
+            ->assertOk()
+            ->assertSee('action="'.route('logout').'"', escape: false);
+
+        $this->post(route('logout'))->assertRedirect(route('login'));
+
+        $this->assertGuest();
+    }
+
+    public function test_guests_do_not_see_a_logout_button_on_public_pages(): void
+    {
+        $this->get(route('notices.index'))
+            ->assertOk()
+            ->assertDontSee('action="'.route('logout').'"', escape: false);
     }
 
     public function test_users_can_logout(): void

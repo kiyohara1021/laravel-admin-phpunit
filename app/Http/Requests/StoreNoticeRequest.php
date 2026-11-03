@@ -49,6 +49,18 @@ class StoreNoticeRequest extends FormRequest
     }
 
     /**
+     * after:now の :date は「now」のまま差し込まれるので、文言をまるごと定める。
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'published_at.after' => '公開日時には未来の日時を指定してください。',
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public function attributes(): array
