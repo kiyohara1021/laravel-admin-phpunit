@@ -439,7 +439,14 @@ class NoticeSearchTest extends TestCase
     {
         Notice::factory()->count(11)->create(['title' => 'abc のお知らせ']);
 
-        $response = $this->get(route('notices.index', ['q' => 'abc']))->assertOk();
+        $response = $this->get(route('notices.index', ['q' => 'abc']))
+            ->assertOk()
+            ->assertSee('前へ')
+            ->assertSee('次へ')
+            ->assertSeeText('11 件中 1〜10 件を表示')
+            ->assertDontSee('Previous')
+            ->assertDontSee('Showing')
+            ->assertDontSee('Next');
 
         $this->assertStringContainsString(
             'q=abc',

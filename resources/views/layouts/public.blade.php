@@ -13,6 +13,13 @@
         <p class="public-brand">
             <a href="{{ route('notices.index') }}">お知らせ</a>
         </p>
+        {{-- 管理者でないままログインしていると /login からここへ戻されるので、抜け出す手段を置く --}}
+        @auth
+            <form class="public-logout" method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="btn secondary" type="submit">ログアウト</button>
+            </form>
+        @endauth
     </div>
 </header>
 <main class="public-main">

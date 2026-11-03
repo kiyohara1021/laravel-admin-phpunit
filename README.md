@@ -53,7 +53,7 @@ php artisan serve
 | ロール | メール | パスワード |
 | --- | --- | --- |
 | 管理者 | `admin@example.com` | `password` |
-| 一般ユーザー（管理画面は403） | `user@example.com` | `password` |
+| 一般ユーザー（管理画面にはログインできない） | `user@example.com` | `password` |
 
 これらはデモ専用のシード値です。本番では使用しないでください。
 
