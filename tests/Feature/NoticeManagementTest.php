@@ -6,11 +6,16 @@ use App\Enums\NoticeStatus;
 use App\Models\Notice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class NoticeManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** phpunit.xml で固定しているアプリのタイムゾーン */
+    private const TIMEZONE = 'Asia/Tokyo';
 
     public function test_admin_can_view_notice_index(): void
     {
@@ -103,6 +108,89 @@ class NoticeManagementTest extends TestCase
             $publishAt->format('Y-m-d H:i'),
             $notice->published_at->format('Y-m-d H:i')
         );
+    }
+
+    public function test_scheduled_notice_is_published_at_the_entered_local_datetime(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->travelTo(Carbon::create(2026, 1, 1, 9, 0, 0, self::TIMEZONE));
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '時刻どおり公開するお知らせ',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => '2026-01-01T10:00',
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '時刻どおり公開するお知らせ')->sole();
+        $this->assertNotNull($notice->published_at);
+        $this->assertSame('2026-01-01 10:00', $notice->published_at->format('Y-m-d H:i'));
+        // 設定に頼らず、入力が日本時間として読まれたことを UTC で確かめる
+        $this->assertSame('2026-01-01 01:00', $notice->published_at->copy()->utc()->format('Y-m-d H:i'));
+
+        $this->travelTo(Carbon::create(2026, 1, 1, 9, 59, 59, self::TIMEZONE));
+        $this->assertTrue($notice->refresh()->isScheduled());
+
+        $this->travelTo(Carbon::create(2026, 1, 1, 10, 0, 0, self::TIMEZONE));
+        $this->assertTrue($notice->refresh()->isPublished());
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function publishedAtFormats(): array
+    {
+        return [
+            'datetime-local' => ['2099-01-01T10:00', '2099-01-01 10:00'],
+            'datetime-local（秒付き）' => ['2099-01-01T10:00:00', '2099-01-01 10:00'],
+            '空白区切り' => ['2099-01-01 10:00', '2099-01-01 10:00'],
+            '日本時間のオフセット付き' => ['2099-01-01T10:00:00+09:00', '2099-01-01 10:00'],
+            'UTC のオフセット付き' => ['2099-01-01T01:00:00Z', '2099-01-01 10:00'],
+        ];
+    }
+
+    #[DataProvider('publishedAtFormats')]
+    public function test_scheduling_accepts_every_format_the_validation_accepts(string $input, string $expectedLocal): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '形式の違う予約公開',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => $input,
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '形式の違う予約公開')->sole();
+        $this->assertNotNull($notice->published_at);
+        $this->assertSame($expectedLocal, $notice->published_at->format('Y-m-d H:i'));
+        $this->assertSame(self::TIMEZONE, $notice->published_at->getTimezone()->getName());
+    }
+
+    public function test_edit_form_shows_the_same_scheduled_datetime_string_that_was_saved(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->travelTo(Carbon::create(2026, 1, 1, 9, 0, 0, self::TIMEZONE));
+
+        $this->actingAs($admin)
+            ->post(route('admin.notices.store'), [
+                'title' => '編集画面の初期値を確認するお知らせ',
+                'body' => '本文です。',
+                'status' => NoticeStatus::Scheduled->value,
+                'published_at' => '2026-01-02T10:15',
+            ])
+            ->assertRedirect(route('admin.notices.index'));
+
+        $notice = Notice::query()->where('title', '編集画面の初期値を確認するお知らせ')->sole();
+
+        $this->actingAs($admin)
+            ->get(route('admin.notices.edit', $notice))
+            ->assertOk()
+            ->assertSee('value="2026-01-02T10:15"', escape: false);
     }
 
     public function test_scheduling_requires_a_published_at(): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,11 @@ class LoginController extends Controller
     {
         $request->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($request->validated(), $request->boolean('remember'))) {
+        if (! Auth::attemptWhen(
+            $request->validated(),
+            fn (User $user): bool => $user->isAdmin(),
+            $request->boolean('remember'),
+        )) {
             RateLimiter::hit($request->throttleKey(), LoginRequest::DECAY_SECONDS);
 
             throw ValidationException::withMessages([
