@@ -6,6 +6,7 @@ use App\Enums\NoticeStatus;
 use App\Models\Notice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class NoticeManagementTest extends TestCase
@@ -103,6 +104,64 @@ class NoticeManagementTest extends TestCase
             $publishAt->format('Y-m-d H:i'),
             $notice->published_at->format('Y-m-d H:i')
         );
+    }
+
+    public function test_scheduled_notice_is_published_at_the_entered_local_datetime(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Carbon::setTestNow(Carbon::create(2026, 1, 1, 9, 0, 0, config('app.timezone')));
+        $publishAtInput = '2026-01-01T10:00';
+
+        try {
+            $this->actingAs($admin)
+                ->post(route('admin.notices.store'), [
+                    'title' => '時刻どおり公開するお知らせ',
+                    'body' => '本文です。',
+                    'status' => NoticeStatus::Scheduled->value,
+                    'published_at' => $publishAtInput,
+                ])
+                ->assertRedirect(route('admin.notices.index'));
+
+            $notice = Notice::query()->where('title', '時刻どおり公開するお知らせ')->sole();
+            $this->assertSame('2026-01-01 10:00', $notice->published_at?->format('Y-m-d H:i'));
+
+            $this->travelTo(Carbon::create(2026, 1, 1, 9, 59, 59, config('app.timezone')));
+            $this->assertTrue($notice->fresh()->isScheduled());
+
+            $this->travelTo(Carbon::create(2026, 1, 1, 10, 0, 0, config('app.timezone')));
+            $this->assertTrue($notice->fresh()->isPublished());
+        } finally {
+            $this->travelBack();
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_edit_form_shows_the_same_scheduled_datetime_string_that_was_saved(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Carbon::setTestNow(Carbon::create(2026, 1, 1, 9, 0, 0, config('app.timezone')));
+        $publishAtInput = '2026-01-02T10:15';
+
+        try {
+            $this->actingAs($admin)
+                ->post(route('admin.notices.store'), [
+                    'title' => '編集画面の初期値を確認するお知らせ',
+                    'body' => '本文です。',
+                    'status' => NoticeStatus::Scheduled->value,
+                    'published_at' => $publishAtInput,
+                ])
+                ->assertRedirect(route('admin.notices.index'));
+
+            $notice = Notice::query()->where('title', '編集画面の初期値を確認するお知らせ')->sole();
+            $this->assertSame('2026-01-02 10:15', $notice->published_at?->format('Y-m-d H:i'));
+
+            $this->actingAs($admin)
+                ->get(route('admin.notices.edit', $notice))
+                ->assertOk()
+                ->assertSee('value="'.$publishAtInput.'"', escape: false);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_scheduling_requires_a_published_at(): void
