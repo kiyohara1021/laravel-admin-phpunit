@@ -124,11 +124,12 @@ class NoticeController extends Controller
     {
         return match (NoticeStatus::from($status)) {
             NoticeStatus::Draft => null,
-            NoticeStatus::Scheduled => Carbon::createFromFormat(
-                'Y-m-d\TH:i',
+            // タイムゾーンのない入力（datetime-local）はアプリのタイムゾーンとして読む。
+            // オフセット付きの入力も揃えておく（Eloquent は変換せず時刻だけを保存するため）
+            NoticeStatus::Scheduled => Carbon::parse(
                 $publishedAt ?? throw new LogicException('Scheduled notices require published_at.'),
-                config('app.timezone'),
-            ) ?: throw new LogicException('Scheduled notices require a valid published_at datetime.'),
+                config()->string('app.timezone'),
+            )->setTimezone(config()->string('app.timezone')),
             // すでに公開済みなら初回の公開日時を保つ（編集のたびに繰り上がらないように）
             NoticeStatus::Published => $notice?->isPublished() ? $notice->published_at : now(),
         };
