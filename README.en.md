@@ -53,7 +53,7 @@ Open `http://localhost:8000`.
 | Role | Email | Password |
 | --- | --- | --- |
 | Administrator | `admin@example.com` | `password` |
-| Regular user (admin routes return 403) | `user@example.com` | `password` |
+| Regular user (cannot sign in to admin) | `user@example.com` | `password` |
 
 These credentials are demonstration fixtures. Never use them in production.
 

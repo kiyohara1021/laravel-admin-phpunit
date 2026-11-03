@@ -148,6 +148,22 @@ class LoginThrottleTest extends TestCase
         }
     }
 
+    public function test_non_admin_login_failures_are_counted_toward_throttle(): void
+    {
+        $user = User::factory()->create(['email' => 'user@example.com']);
+
+        for ($i = 1; $i <= LoginRequest::MAX_ATTEMPTS; $i++) {
+            $response = $this->postLogin($user->email, 'password');
+            $this->assertSame(self::CREDENTIALS_MESSAGE, $this->emailError($response), "{$i} 回目までは資格情報エラーになる");
+        }
+
+        $response = $this->postLogin($user->email, 'password')
+            ->assertRedirect(route('login'));
+
+        $this->assertStringStartsWith(self::LOCKOUT_MESSAGE_HEAD, $this->emailError($response), '一般ユーザーでも失敗が上限に達するとロックされる');
+        $this->assertGuest();
+    }
+
     public function test_lockout_message_tells_how_many_seconds_to_wait(): void
     {
         $user = User::factory()->admin()->create();
