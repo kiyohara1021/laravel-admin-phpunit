@@ -116,6 +116,27 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('notices.index'));
     }
 
+    public function test_authenticated_non_admin_users_can_log_out_from_public_pages(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('notices.index'))
+            ->assertOk()
+            ->assertSee('action="'.route('logout').'"', escape: false);
+
+        $this->post(route('logout'))->assertRedirect(route('login'));
+
+        $this->assertGuest();
+    }
+
+    public function test_guests_do_not_see_a_logout_button_on_public_pages(): void
+    {
+        $this->get(route('notices.index'))
+            ->assertOk()
+            ->assertDontSee('action="'.route('logout').'"', escape: false);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->admin()->create();
