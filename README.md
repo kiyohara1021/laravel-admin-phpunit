@@ -29,7 +29,7 @@ Laravel 13の管理画面を「作る」だけでなく、**認証・認可・�
 
 | PHPUnit | 静的解析 | 対応PHP |
 | --- | --- | --- |
-| 225 tests / 910 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 / 8.6 |
+| 233 tests / 931 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 / 8.6 |
 
 テストは実行順をランダム化し、risky・警告・非推奨をすべて失敗として扱います。詳細は[テスト戦略](docs/testing.md)にまとめています。
 
@@ -111,6 +111,8 @@ composer security  # 既知脆弱性の検査
 ```
 
 ## プロジェクト文書
+
+[GitHub Pagesの公開サイト](https://kiyohara1021.github.io/laravel-admin-phpunit/)でも、以下の文書を読めます。
 
 - [設計概要](docs/architecture.md)
 - [状態モデル](docs/domain-model.md)

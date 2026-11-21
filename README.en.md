@@ -29,7 +29,7 @@ See the [architecture overview](docs/architecture.md), [domain model](docs/domai
 
 | PHPUnit | Static analysis | PHP matrix |
 | --- | --- | --- |
-| 225 tests / 910 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 / 8.6 |
+| 233 tests / 931 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 / 8.6 |
 
 Tests run in a randomized order, and risky tests, warnings, and deprecations all fail the build. See the [testing strategy](docs/testing.md) for the details.
 
@@ -111,6 +111,8 @@ composer security  # Known vulnerability audit
 ```
 
 ## Project documents
+
+The documents below are also published on [GitHub Pages](https://kiyohara1021.github.io/laravel-admin-phpunit/en.html).
 
 - [Architecture](docs/architecture.md)
 - [Domain model](docs/domain-model.md)
