@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml/badge.svg)](https://github.com/kiyohara1021/laravel-admin-phpunit/actions/workflows/ci.yml)
 ![Laravel 13](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
-![PHP 8.4 / 8.5](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php&logoColor=white)
+![PHP 8.4 / 8.5 / 8.6](https://img.shields.io/badge/PHP-8.4%20%7C%208.5%20%7C%208.6-777BB4?logo=php&logoColor=white)
 [![Latest release](https://img.shields.io/github/v/release/kiyohara1021/laravel-admin-phpunit)](https://github.com/kiyohara1021/laravel-admin-phpunit/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -29,7 +29,7 @@ See the [architecture overview](docs/architecture.md), [domain model](docs/domai
 
 | PHPUnit | Static analysis | PHP matrix |
 | --- | --- | --- |
-| 225 tests / 910 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
+| 225 tests / 910 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 / 8.6 |
 
 Tests run in a randomized order, and risky tests, warnings, and deprecations all fail the build. See the [testing strategy](docs/testing.md) for the details.
 
