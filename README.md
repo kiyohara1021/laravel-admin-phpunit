@@ -112,6 +112,8 @@ composer security  # 既知脆弱性の検査
 
 ## プロジェクト文書
 
+[GitHub Pagesの公開サイト](https://kiyohara1021.github.io/laravel-admin-phpunit/)でも、以下の文書を読めます。
+
 - [設計概要](docs/architecture.md)
 - [状態モデル](docs/domain-model.md)
 - [検索とフィルタリング](docs/search-and-filtering.md)

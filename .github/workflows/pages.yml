@@ -1,0 +1,90 @@
+name: Pages
+
+# README と docs/ を GitHub Pages に公開する。
+# Pull Request ではビルドとリンク検査だけを行い、main への push でデプロイする。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README*.md'
+      - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'SUPPORT.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'scripts/**'
+      - '.github/workflows/pages.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README*.md'
+      - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'SUPPORT.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'scripts/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# 公開の途中で別のデプロイが走って古い内容に戻らないよう、デプロイは直列にする
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: PHP をセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, dom, mbstring, tokenizer, xml
+          coverage: none
+
+      # 生成に使う league/commonmark は Laravel の依存に含まれる
+      - name: 依存関係をインストール
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
+
+      # 存在しないリンク先や見出しアンカーがあればここで失敗する
+      - name: ページを生成
+        run: php scripts/build-pages.php --commit=${{ github.sha }}
+
+      - name: Pages の設定を取得
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+
+      - name: 成果物をアップロード
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: GitHub Pages にデプロイ
+        id: deployment
+        uses: actions/deploy-pages@v5
