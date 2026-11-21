@@ -12,9 +12,9 @@ Laravel 13の管理画面を「作る」だけでなく、**認証・認可・�
 
 ![公開・予約公開・下書きを管理するお知らせ一覧](docs/images/admin-notices.jpg)
 
-<p align="center">公開・予約公開・下書きを一画面で管理。検索、状態フィルタ、論理削除にも対応。</p>
+<p align="center">公開・予約公開・下書きを一画面で管理。検索、状態フィルター、論理削除にも対応。</p>
 
-## 普通のCRUDサンプルとの違い
+## 一般的なCRUDサンプルとの違い
 
 - 公開側の検索に下書き・予約公開・削除済みを漏らさない
 - Middleware、Policy、FormRequestの責務を混ぜない
@@ -25,11 +25,11 @@ Laravel 13の管理画面を「作る」だけでなく、**認証・認可・�
 
 詳細は[設計概要](docs/architecture.md)、[状態モデル](docs/domain-model.md)、[検索設計](docs/search-and-filtering.md)、[テスト戦略](docs/testing.md)にまとめています。
 
-## 品質の証拠
+## 品質の指標
 
 | PHPUnit | 静的解析 | 対応PHP |
 | --- | --- | --- |
-| 233 tests / 931 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 / 8.6 |
+| 234 tests / 933 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 / 8.6 |
 
 テストは実行順をランダム化し、risky・警告・非推奨をすべて失敗として扱います。詳細は[テスト戦略](docs/testing.md)にまとめています。
 
@@ -61,11 +61,11 @@ php artisan serve
 
 <table>
   <tr>
-    <td><img src="docs/images/admin-dashboard.jpg" alt="状態別件数を表示する管理ダッシュボード"></td>
+    <td><img src="docs/images/admin-dashboard.jpg" alt="状態別の件数を表示する管理ダッシュボード"></td>
     <td><img src="docs/images/admin-notice-form.jpg" alt="予約公開日時を指定するお知らせ編集フォーム"></td>
   </tr>
   <tr>
-    <td align="center">状態別件数を可視化するダッシュボード</td>
+    <td align="center">状態別の件数を表示するダッシュボード</td>
     <td align="center">下書き・即時公開・予約公開を切り替えるフォーム</td>
   </tr>
 </table>
@@ -94,8 +94,8 @@ curl 'http://localhost:8000/api/notices?q=メンテナンス&page=1'
 - 管理者ログイン、ログアウト、総当たり対策
 - お知らせCRUD、予約公開、論理削除、復元、完全削除
 - Middleware、Policy、Gateによる二層の認可
-- 不正な状態フィルタ、ページャ、SQLワイルドカード
-- 公開側（画面・API）への下書き・予約・削除済みレコードの漏洩防止
+- 不正な状態フィルター、ページ送り、SQLワイルドカード
+- 公開側（画面・API）に下書き・予約公開・削除済みのお知らせを出さないこと
 - HTMLエスケープ、作成者削除後のnull安全性
 
 テストファイルごとの対応表は[テスト戦略](docs/testing.md)を参照してください。

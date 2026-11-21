@@ -55,7 +55,7 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 | `NoticeManagementTest.php` | CRUD、予約公開、検証、作成者記録 |
 | `NoticeTrashTest.php` | ゴミ箱、復元、完全削除、権限 |
 | `NoticeAuthorizationTest.php` | 各操作がPolicyを通ること |
-| `NoticeSearchTest.php` | 検索、状態、件数、ページャ、公開範囲 |
+| `NoticeSearchTest.php` | 検索、状態、件数、ページ送り、公開範囲 |
 | `PublicNoticeTest.php` | 公開一覧・詳細、404、本文エスケープ |
 
 ## Unit tests

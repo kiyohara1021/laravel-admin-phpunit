@@ -191,13 +191,13 @@ class PublicNoticeTest extends TestCase
             ->assertOk()
             ->assertDontSee('管理画面')
             ->assertDontSee('ダッシュボード')
-            ->assertDontSee('としてログアウト');
+            ->assertDontSee('ログアウト（');
 
         $this->get(route('notices.show', $notice))
             ->assertOk()
             ->assertDontSee('管理画面')
             ->assertDontSee('ダッシュボード')
-            ->assertDontSee('としてログアウト');
+            ->assertDontSee('ログアウト（');
     }
 
     public function test_logged_in_admin_can_also_view_the_public_pages(): void

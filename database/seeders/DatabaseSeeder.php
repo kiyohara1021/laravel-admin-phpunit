@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
 
         Notice::factory()->for($admin)->create([
             'title' => '管理画面の使い方',
-            'body' => 'ログイン後、お知らせの作成・編集・削除ができます。PHPUnit のテストを添えた管理画面サンプルです。',
+            'body' => 'ログイン後、お知らせの作成・編集・削除ができます。PHPUnit でテストしている管理画面のサンプルです。',
             'published_at' => now(),
         ]);
 

@@ -11,6 +11,16 @@ class DashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_layout_shows_who_is_logged_in_on_the_logout_button(): void
+    {
+        $admin = User::factory()->admin()->create(['name' => '山田 花子']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('ログアウト（山田 花子）');
+    }
+
     public function test_admin_can_view_dashboard_counts(): void
     {
         $admin = User::factory()->admin()->create();
@@ -30,10 +40,10 @@ class DashboardTest extends TestCase
             ->assertViewHas('adminCount', 1)
             ->assertSeeInOrder([
                 'お知らせ', '<strong>4</strong>',
-                '公開中', '<strong>1</strong>',
+                '公開', '<strong>1</strong>',
                 '予約公開', '<strong>1</strong>',
                 '下書き', '<strong>2</strong>',
-                '管理者', '<strong>1</strong>',
+                '管理者数', '<strong>1</strong>',
             ], escape: false);
     }
 
@@ -52,7 +62,7 @@ class DashboardTest extends TestCase
             ->assertViewHas('draftCount', 0)
             ->assertSeeInOrder([
                 'お知らせ', '<strong>1</strong>',
-                '公開中', '<strong>1</strong>',
+                '公開', '<strong>1</strong>',
                 '予約公開', '<strong>0</strong>',
                 '下書き', '<strong>0</strong>',
             ], escape: false);
