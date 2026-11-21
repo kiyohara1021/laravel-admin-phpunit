@@ -29,7 +29,7 @@ See the [architecture overview](docs/architecture.md), [domain model](docs/domai
 
 | PHPUnit | Static analysis | PHP matrix |
 | --- | --- | --- |
-| 185 tests / 674 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
+| 225 tests / 910 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
 
 Tests run in a randomized order, and risky tests, warnings, and deprecations all fail the build. See the [testing strategy](docs/testing.md) for the details.
 
@@ -74,13 +74,28 @@ These credentials are demonstration fixtures. Never use them in production.
 
 <p align="center">The public surface only exposes published notices. No login or API key is required.</p>
 
+## Public API
+
+A JSON API returns the published notices. No authentication is required.
+
+```bash
+curl 'http://localhost:8000/api/notices?q=maintenance&page=1'
+```
+
+| Parameter | Description |
+| --- | --- |
+| `q` | Substring match on title and body. Omitted or empty means no filtering |
+| `page` | Page number, 10 notices per page |
+
+The response uses Laravel's standard pagination shape with `data`, `links`, and `meta`. Each notice contains only `id`, `title`, `body`, and `published_at` (ISO 8601); the author is not included. Like the public pages, it never returns draft, scheduled, or deleted notices.
+
 ## Behaviors under test
 
 - Administrator authentication, logout, and brute-force throttling
 - Notice CRUD, scheduled publication, soft deletion, restore, and force delete
 - Layered authorization with middleware, policies, and gates
 - Invalid state filters, pagination, and SQL wildcard escaping
-- Prevention of draft, scheduled, and deleted record leakage
+- Prevention of draft, scheduled, and deleted record leakage through the public pages and API
 - HTML escaping and null-safe author history
 
 See the [testing strategy](docs/testing.md) for the file-by-file matrix.

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 公開中のお知らせ一覧 API（`GET /api/notices`）。キーワード検索（`q`）と10件ごとのページ送りに対応し、Featureテストを追加。
+
 ### Changed
 
 - `phpunit/phpunit` を `^13.4`（13.4.6）へ更新し、関連するテスト依存を追従。
