@@ -9,7 +9,7 @@
             <strong>{{ $noticeCount }}</strong>
         </section>
         <section class="panel stat">
-            <span class="muted">公開中</span>
+            <span class="muted">公開</span>
             <strong>{{ $publishedCount }}</strong>
         </section>
         <section class="panel stat">
@@ -21,10 +21,10 @@
             <strong>{{ $draftCount }}</strong>
         </section>
         <section class="panel stat">
-            <span class="muted">管理者</span>
+            <span class="muted">管理者数</span>
             <strong>{{ $adminCount }}</strong>
         </section>
     </div>
 
-    <p class="muted">公開中・予約公開・下書きの合計が、お知らせの総数になります。</p>
+    <p class="muted">公開・予約公開・下書きの合計が、お知らせの総数になります。</p>
 @endsection

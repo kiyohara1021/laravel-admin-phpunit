@@ -19,11 +19,11 @@
         <div class="topbar">
             <div>
                 <h1>@yield('title', '管理画面')</h1>
-                <p class="muted">PHPUnit のテストを添えた管理画面サンプルです。</p>
+                <p class="muted">PHPUnit でテストしている管理画面のサンプルです。</p>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="btn secondary" type="submit">{{ auth()->user()->name }} としてログアウト</button>
+                <button class="btn secondary" type="submit">ログアウト（{{ auth()->user()->name }}）</button>
             </form>
         </div>
         @if (session('status'))

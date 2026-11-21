@@ -497,7 +497,7 @@ class NoticeSearchTest extends TestCase
             ->assertOk()
             ->assertDontSee('管理画面')
             ->assertDontSee('ダッシュボード')
-            ->assertDontSee('としてログアウト')
+            ->assertDontSee('ログアウト（')
             // 公開側に下書き・予約公開という語を出さない（状態のセレクトは置かない）
             ->assertDontSee('下書き')
             ->assertDontSee('予約公開');
