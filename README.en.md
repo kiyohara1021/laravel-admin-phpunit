@@ -29,7 +29,7 @@ See the [architecture overview](docs/architecture.md), [domain model](docs/domai
 
 | PHPUnit | Static analysis | PHP matrix |
 | --- | --- | --- |
-| 225 tests / 910 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
+| 233 tests / 931 assertions | Larastan level 10 (test code included) | 8.4 / 8.5 |
 
 Tests run in a randomized order, and risky tests, warnings, and deprecations all fail the build. See the [testing strategy](docs/testing.md) for the details.
 

@@ -29,7 +29,7 @@ Laravel 13の管理画面を「作る」だけでなく、**認証・認可・�
 
 | PHPUnit | 静的解析 | 対応PHP |
 | --- | --- | --- |
-| 225 tests / 910 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 |
+| 233 tests / 931 assertions | Larastan level 10（テストコードも対象） | 8.4 / 8.5 |
 
 テストは実行順をランダム化し、risky・警告・非推奨をすべて失敗として扱います。詳細は[テスト戦略](docs/testing.md)にまとめています。
 
