@@ -112,6 +112,8 @@ composer security  # Known vulnerability audit
 
 ## Project documents
 
+The documents below are also published on [GitHub Pages](https://kiyohara1021.github.io/laravel-admin-phpunit/en.html).
+
 - [Architecture](docs/architecture.md)
 - [Domain model](docs/domain-model.md)
 - [Search and filtering](docs/search-and-filtering.md)

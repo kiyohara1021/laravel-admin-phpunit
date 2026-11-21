@@ -7,6 +7,7 @@
 ### Added
 
 - 公開中のお知らせ一覧 API（`GET /api/notices`）。キーワード検索（`q`）と10件ごとのページ送りに対応し、Featureテストを追加。
+- README と `docs/` を GitHub Pages で公開する生成スクリプト（`scripts/build-pages.php`）とワークフロー。存在しないリンク先や見出しアンカーがあると生成に失敗する。
 
 ### Changed
 
