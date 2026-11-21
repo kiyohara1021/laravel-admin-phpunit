@@ -73,7 +73,7 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 
 | ジョブ | 内容 |
 | --- | --- |
-| PHPUnit (PHP 8.4 / 8.5) | 185 tests / 674 assertions |
+| PHPUnit (PHP 8.4 / 8.5 / 8.6) | 185 tests / 674 assertions |
 | Coverage | PCOVで計測し、結果を実行サマリに出す |
 | Lint | Composer整合性とPint |
 | Static analysis | Larastan level 10（`app`から`tests`まで） |
@@ -86,4 +86,4 @@ php artisan test --filter=test_admin_can_create_a_published_notice
 
 ## English summary
 
-Feature tests protect HTTP-visible behavior and security boundaries. Unit tests isolate state transitions, query composition, authorization rules, and normalization. Tests run in a randomized order, and risky tests, output, warnings, and deprecations all fail the build. CI runs the suite on PHP 8.4 and 8.5 and adds coverage, static analysis at Larastan level 10 over both application and test code, style, lockfile, and dependency checks.
+Feature tests protect HTTP-visible behavior and security boundaries. Unit tests isolate state transitions, query composition, authorization rules, and normalization. Tests run in a randomized order, and risky tests, output, warnings, and deprecations all fail the build. CI runs the suite on PHP 8.4, 8.5, and 8.6 and adds coverage, static analysis at Larastan level 10 over both application and test code, style, lockfile, and dependency checks.
